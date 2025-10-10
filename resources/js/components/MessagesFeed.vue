@@ -53,9 +53,11 @@ export default {
     },
     methods: {
         scrollToBottom() {
-            setTimeout(() => {
-                this.$refs.feed.scrollTop = this.$refs.feed.scrollHeight - this.$refs.feed.clientHeight;
-            }, 50);
+            this.$nextTick(() => {
+                if (this.$refs.feed) {
+                    this.$refs.feed.scrollTop = this.$refs.feed.scrollHeight;
+                }
+            });
         },
         formatTime(time) {
             return moment(time).format('h:mm a');
@@ -111,24 +113,36 @@ export default {
             } else if (minutes < 60) {
                 return `${minutes} minutes ago`;
             } else if (isToday) {
-                return getFormattedDate(date, 'Today'); // Today at 10:20
+                return this.getFormattedDate(date, 'Today'); // Today at 10:20
             } else if (isYesterday) {
-                return getFormattedDate(date, 'Yesterday'); // Yesterday at 10:20
+                return this.getFormattedDate(date, 'Yesterday'); // Yesterday at 10:20
             } else if (isThisYear) {
-                return getFormattedDate(date, false, true); // 10. January at 10:20
+                return this.getFormattedDate(date, false, true); // 10. January at 10:20
             }
 
-            return getFormattedDate(date); // 10. January 2017. at 10:20
+            return this.getFormattedDate(date); // 10. January 2017. at 10:20
         },
 
     },
     watch: {
-        contact: function (old) {
-            this.scrollToBottom();
+        contact: function (newContact, oldContact) {
+            if (newContact && newContact !== oldContact) {
+                this.scrollToBottom();
+            }
         },
-        messages: function (old) {
-            this.scrollToBottom();
+        messages: {
+            handler: function (newMessages, oldMessages) {
+                if (newMessages && newMessages.length > 0) {
+                    // Auto-scroll when new messages are added
+                    this.scrollToBottom();
+                }
+            },
+            deep: true
         },
+    },
+    mounted() {
+        // Scroll to bottom when component is mounted
+        this.scrollToBottom();
     },
 }
 </script>
