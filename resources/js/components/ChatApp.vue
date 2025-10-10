@@ -25,6 +25,10 @@ export default {
         }
     },
     methods: {
+        getIdString(value) {
+            if (!value) return '';
+            return (value.$oid ? value.$oid : value).toString();
+        },
         startConversationWith(contact) {
             this.updateUnreadCount(contact, true)
             axios.get(`/conversation/${contact._id}`)
@@ -34,19 +38,27 @@ export default {
                 })
         },
         saveNewMessage(message) {
-            this.messages.push(message);
+            const selectedId = this.getIdString(this.selectedContact && this.selectedContact._id);
+            const toId = this.getIdString(message && message.to);
+            if (selectedId && toId === selectedId) {
+                this.messages.push(message);
+            }
         },
         handleIncoming(data) {
             const message = data.message;
-            const fromContact = data.from_contact;
-            
-            if (this.selectedContact && message.from === this.selectedContact._id) {
+            const fromContact = data.from_contact || {};
+            const selectedId = this.getIdString(this.selectedContact && this.selectedContact._id);
+            const fromId = this.getIdString(message && message.from);
+
+            if (this.selectedContact && fromId === selectedId) {
                 this.messages.push(message);
                 return;
             }
 
             //unread messages
-            this.updateUnreadCount(fromContact, false);
+            if (fromContact && fromContact._id) {
+                this.updateUnreadCount(fromContact, false);
+            }
         },
         updateUnreadCount(contact, reset) {
             this.contacts = this.contacts.map((single) => {
@@ -63,7 +75,8 @@ export default {
         }
     },
     mounted() {
-        Echo.private(`messages.${this.user._id}`)
+        const userId = this.getIdString(this.user && this.user._id);
+        Echo.private(`messages.${userId}`)
             .listen('NewMessage', (e) => {
                 this.handleIncoming(e);
             })

@@ -44,15 +44,24 @@ export default {
         return {}
     },
     methods: {
+        getIdString(value) {
+            if (!value) return '';
+            return (value.$oid ? value.$oid : value).toString();
+        },
         sendMessage(text) {
             if (!this.contact) {
                 return;
             }
             axios.post('/conversation/send', {
-                contact_id: this.contact._id,
+                contact_id: this.getIdString(this.contact._id),
                 text: text,
             }).then(response => {
-                this.$emit('new', response.data);
+                // backend trả về message đúng; chỉ emit khi message thuộc đoạn hội thoại đang mở
+                const toId = this.getIdString(response.data && response.data.to);
+                const contactId = this.getIdString(this.contact && this.contact._id);
+                if (contactId && toId === contactId) {
+                    this.$emit('new', response.data);
+                }
             })
         }
     },

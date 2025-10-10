@@ -34,14 +34,20 @@ class ContactsController extends Controller
     {
         $currentUserId = auth()->user()->_id;
         
-        //mark all messages with the selected contact as read
-        Message::where('from', $id)->where('to', $currentUserId)->update(['read' => true]);
+        // mark all messages with the selected contact as read (model path to avoid bad timestamp types)
+        $toMark = Message::where('from', (string) $id)
+            ->where('to', (string) $currentUserId)
+            ->get();
+        foreach ($toMark as $m) {
+            $m->read = true;
+            $m->save(); // lets Jenssegers set updated_at as proper UTCDateTime
+        }
         $messages = Message::where(function ($q) use ($id, $currentUserId) {
-            $q->where('from', $currentUserId);
-            $q->where('to', $id);
+            $q->where('from', (string) $currentUserId);
+            $q->where('to', (string) $id);
         })->orWhere(function ($q) use ($id, $currentUserId) {
-            $q->where('from', $id);
-            $q->where('to', $currentUserId);
+            $q->where('from', (string) $id);
+            $q->where('to', (string) $currentUserId);
         })->orderBy('created_at', 'asc')->get();
         return response()->json($messages);
     }
@@ -55,8 +61,8 @@ class ContactsController extends Controller
         ]);
 
         $message = Message::create([
-            'from' => auth()->user()->_id,
-            'to' => $request->contact_id,
+            'from' => (string) auth()->user()->_id,
+            'to' => (string) $request->contact_id,
             'text' => $request->text,
             'read' => false
         ]);

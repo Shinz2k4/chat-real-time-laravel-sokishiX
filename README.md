@@ -49,6 +49,64 @@ docker compose restart node
 
 Access the app at `http://localhost`.
 
+## 1.1) Run without Docker (native)
+
+Prereqs:
+- PHP 8.2 with extensions: mbstring, bcmath, intl, openssl, pdo, mongodb (pecl), zip
+- Composer 2.x
+- Node.js 18.x and npm
+- MongoDB (local or Atlas)
+
+Steps:
+1. Copy env and set Mongo:
+```
+cp .env.example .env
+```
+Edit `.env`:
+```
+APP_URL=http://localhost
+DB_CONNECTION=mongodb
+MONGODB_DSN=mongodb+srv://<user>:<pass>@<cluster>.<hash>.mongodb.net
+MONGODB_DATABASE=laravel_chat
+PUSHER_APP_KEY=local
+PUSHER_APP_CLUSTER=mt1
+VITE_PUSHER_APP_KEY=${PUSHER_APP_KEY}
+VITE_PUSHER_HOST=localhost
+VITE_PUSHER_PORT=6001
+VITE_PUSHER_SCHEME=http
+VITE_HOST=0.0.0.0
+```
+
+2. Install PHP deps and generate key:
+```
+composer install --no-interaction --prefer-dist --no-progress
+php artisan key:generate
+```
+
+3. Frontend deps and dev server:
+```
+npm install
+npm run dev
+```
+
+4. Run Laravel server:
+```
+php artisan serve --host=0.0.0.0 --port=8000
+```
+Access: `http://localhost:8000`
+
+5. Optimize (optional in prod):
+```
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+composer dump-autoload --optimize
+```
+
+Notes:
+- Ensure the PHP MongoDB extension is installed: `pecl install mongodb` and enabled in `php.ini`.
+- Broadcasting via Pusher-compatible server: configure your Pusher or Laravel WebSockets if needed; update `.env` accordingly.
+
 ## 2) Daily usage (after you stop Docker)
 
 Start everything:

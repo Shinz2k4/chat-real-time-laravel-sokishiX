@@ -10,13 +10,13 @@ use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
+// use Illuminate\Queue\SerializesModels;
 
 class NewMessage implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets; // avoid SerializesModels to prevent model re-fetching
 
-    public $message;
+    public array $payload;
 
     /**
      * Create a new event instance.
@@ -25,7 +25,11 @@ class NewMessage implements ShouldBroadcast
      */
     public function __construct(Message $message)
     {
-        $this->message = $message;
+        $message->load('fromContact');
+        $this->payload = [
+            'message' => $message->toArray(),
+            'from_contact' => optional($message->fromContact)->toArray(),
+        ];
     }
 
     /**
@@ -35,17 +39,11 @@ class NewMessage implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        return new PrivateChannel('messages.' . $this->message->to);
+        return new PrivateChannel('messages.' . ($this->payload['message']['to'] ?? ''));
     }
 
     public function broadcastWith()
     {
-        // Load the fromContact relationship to get sender info
-        $this->message->load('fromContact');
-        
-        return [
-            "message" => $this->message,
-            "from_contact" => $this->message->fromContact
-        ];
+        return $this->payload;
     }
 }
