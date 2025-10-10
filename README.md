@@ -1,6 +1,4 @@
-<<<<<<< HEAD
 # chat-real-time-laravel
-=======
 # Laravel Chat App – Docker Run Guide
 
 This project is containerized with Docker (PHP-FPM + Nginx + Node/Vite). It connects to MongoDB Atlas.
@@ -90,6 +88,34 @@ Stop and remove volumes (DB data) – careful:
 docker compose down -v
 ```
 
+## 2.1) Performance runbook (Docker Desktop on Windows/Mac)
+
+Run these after the first build to significantly reduce request latency:
+
+```
+# Rebuild PHP to include OPcache config and restart
+docker compose build --no-cache app
+docker compose up -d
+
+# Install deps into container-owned vendor volume
+docker compose run --rm app composer install --no-interaction --prefer-dist --no-progress
+
+# Warm Laravel caches (config/route/view/events) and optimize autoload
+docker compose exec app php artisan config:cache
+docker compose exec app php artisan route:cache
+docker compose exec app php artisan view:cache
+docker compose exec app php artisan event:cache
+docker compose exec app composer dump-autoload --optimize
+
+# Verify OPcache
+docker compose exec app php -r "if(function_exists('opcache_get_status')){echo (opcache_get_status()['opcache_enabled']?'OPcache ON':'OPcache OFF');}else{echo 'No OPcache';}"
+```
+
+Notes:
+- Source is bind-mounted with `:delegated` to reduce sync overhead.
+- `vendor/` and `storage/` are container volumes to avoid slow host I/O.
+- Nginx gzip is enabled for static/text assets.
+
 ## 3) Environment notes (MongoDB Atlas)
 
 - Ensure your Atlas IP Access List allows your Docker host (temporarily `0.0.0.0/0` for testing).
@@ -141,4 +167,3 @@ docker compose exec app php artisan config:clear && docker compose exec app php 
 docker compose logs -f app
 docker compose logs -f web
 ```
->>>>>>> dc61104 (setup basic)

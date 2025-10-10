@@ -11,4 +11,5 @@ storage/framework/cache
 storage/framework/sessions
 storage/framework/views
 storage/logs
+storage
 '@ | Out-File -Encoding utf8 .dockerignore

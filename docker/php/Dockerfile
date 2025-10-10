@@ -40,6 +40,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
+# Copy app source (bind-mounted at runtime) and PHP performance config
+COPY docker/php/conf.d/ /usr/local/etc/php/conf.d/
 # Optimize PHP-FPM for dev defaults
 COPY --chown=www-data:www-data . /var/www/html
 
