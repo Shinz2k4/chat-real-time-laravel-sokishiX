@@ -5,9 +5,14 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
 use App\Models\User;
+use App\Models\EmailVerification;
+use App\Mail\EmailVerificationMail;
+use App\Services\CloudinaryService;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Http\Request;
 
 class RegisterController extends Controller
 {
@@ -30,6 +35,22 @@ class RegisterController extends Controller
      * @var string
      */
     protected $redirectTo = RouteServiceProvider::HOME;
+
+    /**
+     * Handle a registration request for the application.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+     */
+    public function register(Request $request)
+    {
+        $this->validator($request->all())->validate();
+
+        $user = $this->create($request->all());
+
+        // Don't login here, redirect to verification page instead
+        return $user;
+    }
 
     /**
      * Create a new controller instance.
@@ -66,28 +87,55 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        //check if the user has uploaded a profile image
+        // Handle profile image upload
+        $profileImageUrl = 'default_image.png';
+        
         if (isset($data['profile_image'])) {
-            //get the file name with extension
-            $fileNameWithExt = $data['profile_image']->getClientOriginalName();
-            //get just the file name
-            $fileName = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
-            //get just the extension
-            $extension = $data['profile_image']->getClientOriginalExtension();
-            //file name to store
-            $fileNameToStore = $fileName . '_' . time() . '.' . $extension;
-            //upload the image
-            $path = $data['profile_image']->storeAs('public/profile_images', $fileNameToStore);
-        } else {
-            $fileNameToStore = 'default_image.png';
+            // Generate a temporary user ID for upload
+            $tempUserId = 'temp_' . time() . '_' . rand(1000, 9999);
+            
+            // Upload to Cloudinary
+            $uploadResult = CloudinaryService::uploadAvatar($data['profile_image'], $tempUserId);
+            
+            if ($uploadResult['success']) {
+                $profileImageUrl = $uploadResult['secure_url'];
+            } else {
+                // If upload fails, use default image
+                $profileImageUrl = 'default_image.png';
+                // You might want to log this error or show a message to user
+                \Log::warning('Failed to upload profile image: ' . $uploadResult['error']);
+            }
         }
 
-        return User::create([
-            'name' => $data['name'],
+        // Generate verification code
+        $verificationCode = EmailVerification::generateCode();
+        
+        // Store verification data
+        EmailVerification::create([
             'email' => $data['email'],
-            'phone' => $data['phone'],
-            'password' => Hash::make($data['password']),
-            'profile_image' => $fileNameToStore,
+            'code' => $verificationCode,
+            'expires_at' => now()->addMinutes(10),
+            'verified' => false,
+            'created_at' => now()->toDateTimeString(),
+            'updated_at' => now()->toDateTimeString(),
         ]);
+
+        // Send verification email
+        Mail::to($data['email'])->send(new EmailVerificationMail($verificationCode, $data['email']));
+
+        // Store user data in session for later verification
+        session([
+            'pending_user' => [
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'phone' => $data['phone'],
+                'password' => Hash::make($data['password']),
+                'profile_image' => $profileImageUrl,
+            ]
+        ]);
+
+        // Redirect to verification page
+        return redirect()->route('verify.email.form', ['email' => $data['email']])
+                        ->with('success', 'Mã xác thực đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư.');
     }
 }

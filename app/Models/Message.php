@@ -46,4 +46,5 @@ class Message extends Model
     {
         return '_id';
     }
+
 }

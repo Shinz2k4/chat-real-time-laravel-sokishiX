@@ -2,7 +2,7 @@
     <div class="feed" ref="feed">
         <div v-if="contact">
             <div
-                :class="`message-bubble ${message.to === contact._id ? 'message-sent' : 'message-received'}`"
+                :class="`message-bubble ${message.to === contact._id ? 'message-sent' : 'message-received'} slide-in-right`"
                 v-for="message in messages" :key="message._id" v-if="messages.length > 0">
 
                 <div class="message-content">
@@ -16,14 +16,14 @@
                 </div>
             </div>
             <div class="d-flex justify-content-center align-items-center" v-else>
-                <div class="empty-state text-center">
+                <div class="empty-state text-center fade-in">
                     <i class="fas fa-comments text-muted mb-3" style="font-size: 3rem;"></i>
                     <p class="text-muted">Select a contact to start chatting</p>
                 </div>
             </div>
         </div>
         <div class="h-100 d-flex justify-content-center align-items-center" v-else>
-            <div class="empty-state text-center">
+            <div class="empty-state text-center fade-in">
                 <i class="fas fa-comments text-muted mb-3" style="font-size: 3rem;"></i>
                 <p class="text-muted">Select a contact to start chatting</p>
             </div>

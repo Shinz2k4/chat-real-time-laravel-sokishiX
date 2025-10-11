@@ -1,0 +1,518 @@
+/* ========================================
+   Animation Classes & Keyframes
+   ======================================== */
+
+/* ========================================
+   Fade Animations
+   ======================================== */
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-out {
+    animation: fadeOut 0.3s ease-in-out;
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+/* ========================================
+   Slide Animations
+   ======================================== */
+.slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.slide-in-left {
+    animation: slideInLeft 0.3s ease-out;
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.slide-in-up {
+    animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-in-down {
+    animation: slideInDown 0.3s ease-out;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ========================================
+   Bounce Animations
+   ======================================== */
+.bounce-in {
+    animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.bounce-out {
+    animation: bounceOut 0.3s ease-in;
+}
+
+@keyframes bounceOut {
+    0% {
+        transform: scale(1);
+    }
+    25% {
+        transform: scale(0.95);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.02);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+}
+
+/* ========================================
+   Scale Animations
+   ======================================== */
+.scale-in {
+    animation: scaleIn 0.3s ease-out;
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.scale-out {
+    animation: scaleOut 0.3s ease-in;
+}
+
+@keyframes scaleOut {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+}
+
+/* ========================================
+   Rotate Animations
+   ======================================== */
+.rotate-in {
+    animation: rotateIn 0.5s ease-out;
+}
+
+@keyframes rotateIn {
+    from {
+        opacity: 0;
+        transform: rotate(-180deg) scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: rotate(0deg) scale(1);
+    }
+}
+
+.rotate-out {
+    animation: rotateOut 0.3s ease-in;
+}
+
+@keyframes rotateOut {
+    from {
+        opacity: 1;
+        transform: rotate(0deg) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: rotate(180deg) scale(0.5);
+    }
+}
+
+/* ========================================
+   Pulse Animations
+   ======================================== */
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+.pulse-fast {
+    animation: pulseFast 1s infinite;
+}
+
+@keyframes pulseFast {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* ========================================
+   Shake Animations
+   ======================================== */
+.shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-5px);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(5px);
+    }
+}
+
+/* ========================================
+   Wiggle Animations
+   ======================================== */
+.wiggle {
+    animation: wiggle 0.5s ease-in-out;
+}
+
+@keyframes wiggle {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(-5deg);
+    }
+    75% {
+        transform: rotate(5deg);
+    }
+}
+
+/* ========================================
+   Loading Animations
+   ======================================== */
+.loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+.spinner {
+    animation: spinner 1s linear infinite;
+}
+
+@keyframes spinner {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* ========================================
+   Hover Animations
+   ======================================== */
+.hover-lift {
+    transition: transform var(--transition-normal);
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+}
+
+.hover-scale {
+    transition: transform var(--transition-normal);
+}
+
+.hover-scale:hover {
+    transform: scale(1.05);
+}
+
+.hover-rotate {
+    transition: transform var(--transition-normal);
+}
+
+.hover-rotate:hover {
+    transform: rotate(5deg);
+}
+
+.hover-glow {
+    transition: box-shadow var(--transition-normal);
+}
+
+.hover-glow:hover {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+}
+
+/* ========================================
+   Transition Classes
+   ======================================== */
+.transition-all {
+    transition: all var(--transition-normal);
+}
+
+.transition-fast {
+    transition: all var(--transition-fast);
+}
+
+.transition-slow {
+    transition: all var(--transition-slow);
+}
+
+.transition-bounce {
+    transition: all var(--transition-bounce);
+}
+
+/* ========================================
+   Animation Delays
+   ======================================== */
+.delay-100 {
+    animation-delay: 0.1s;
+}
+
+.delay-200 {
+    animation-delay: 0.2s;
+}
+
+.delay-300 {
+    animation-delay: 0.3s;
+}
+
+.delay-400 {
+    animation-delay: 0.4s;
+}
+
+.delay-500 {
+    animation-delay: 0.5s;
+}
+
+/* ========================================
+   Animation Durations
+   ======================================== */
+.duration-100 {
+    animation-duration: 0.1s;
+}
+
+.duration-200 {
+    animation-duration: 0.2s;
+}
+
+.duration-300 {
+    animation-duration: 0.3s;
+}
+
+.duration-500 {
+    animation-duration: 0.5s;
+}
+
+.duration-700 {
+    animation-duration: 0.7s;
+}
+
+.duration-1000 {
+    animation-duration: 1s;
+}
+
+/* ========================================
+   Animation Fill Modes
+   ======================================== */
+.fill-none {
+    animation-fill-mode: none;
+}
+
+.fill-forwards {
+    animation-fill-mode: forwards;
+}
+
+.fill-backwards {
+    animation-fill-mode: backwards;
+}
+
+.fill-both {
+    animation-fill-mode: both;
+}
+
+/* ========================================
+   Animation Iteration Counts
+   ======================================== */
+.animate-once {
+    animation-iteration-count: 1;
+}
+
+.animate-twice {
+    animation-iteration-count: 2;
+}
+
+.animate-infinite {
+    animation-iteration-count: infinite;
+}
+
+/* ========================================
+   Animation Directions
+   ======================================== */
+.animate-normal {
+    animation-direction: normal;
+}
+
+.animate-reverse {
+    animation-direction: reverse;
+}
+
+.animate-alternate {
+    animation-direction: alternate;
+}
+
+.animate-alternate-reverse {
+    animation-direction: alternate-reverse;
+}
+
+/* ========================================
+   Animation Play States
+   ======================================== */
+.animate-paused {
+    animation-play-state: paused;
+}
+
+.animate-running {
+    animation-play-state: running;
+}
+
+/* ========================================
+   Animation Timing Functions
+   ======================================== */
+.ease-linear {
+    animation-timing-function: linear;
+}
+
+.ease-ease {
+    animation-timing-function: ease;
+}
+
+.ease-ease-in {
+    animation-timing-function: ease-in;
+}
+
+.ease-ease-out {
+    animation-timing-function: ease-out;
+}
+
+.ease-ease-in-out {
+    animation-timing-function: ease-in-out;
+}
+
+.ease-bounce {
+    animation-timing-function: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.ease-elastic {
+    animation-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}

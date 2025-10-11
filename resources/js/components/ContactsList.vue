@@ -1,6 +1,6 @@
 <template>
     <div class="contacts-list">
-        <div class="card">
+        <div class="card shadow-custom">
             <div class="card-header d-flex justify-content-between align-items-center bg-gradient-dark text-white gap-5">
                 <div class="d-flex align-items-center">
                     <i class="fas fa-users me-2"></i>
@@ -17,9 +17,9 @@
                     role="button"
                     v-for="contact in sortedContacts" :key="contact._id" @click="selectContact(contact)">
                     <div class="contact-avatar">
-                        <img :src="'storage/profile_images/' + contact.profile_image" :alt="contact.name"
-                             class="rounded-circle contact-image" v-if="contact.profile_image">
-                        <div class="avatar-placeholder bg-primary text-white d-flex align-items-center justify-content-center rounded-circle" v-else>
+                        <img :src="getAvatarUrl(contact)" :alt="contact.name"
+                             class="contact-image" v-if="contact.profile_image && contact.profile_image !== 'default_image.png'">
+                        <div class="avatar-placeholder bg-primary text-white d-flex align-items-center justify-content-center" v-else>
                             {{ contact.name ? contact.name.charAt(0).toUpperCase() : 'U' }}
                         </div>
                     </div>
@@ -34,7 +34,7 @@
 
                     <!-- Unread Badge -->
                     <div class="unread-badge" v-if="contact.unread">
-                        <span class="badge rounded-pill bg-danger">{{ contact.unread }}</span>
+                        <span class="badge rounded-pill bg-danger bounce-in">{{ contact.unread }}</span>
                     </div>
                 </div>
             </div>
@@ -70,6 +70,20 @@ export default {
         },
         toggleCollapse() {
             this.is_collapsed = !this.is_collapsed;
+        },
+        getAvatarUrl(contact) {
+            if (!contact || !contact.profile_image || contact.profile_image === 'default_image.png') {
+                return 'https://via.placeholder.com/50/6366f1/ffffff?text=' + (contact ? contact.name.charAt(0).toUpperCase() : 'U');
+            }
+            
+            // Check if it's a Cloudinary URL
+            if (contact.profile_image.includes('res.cloudinary.com')) {
+                // Return optimized Cloudinary URL
+                return contact.profile_image.replace('/upload/', '/upload/w_50,h_50,c_fill,g_face,q_auto,f_auto/');
+            }
+            
+            // Fallback to storage URL
+            return 'storage/profile_images/' + contact.profile_image;
         }
     },
     computed: {

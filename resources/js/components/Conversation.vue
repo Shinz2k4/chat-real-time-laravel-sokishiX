@@ -1,11 +1,11 @@
 <template>
     <div class="conversation w-100">
-        <div class="card">
+        <div class="card shadow-custom">
             <div class="card-header bg-gradient-primary text-white d-flex align-items-center gap-4">
                 <div class="contact-avatar d-flex align-items-center justify-content-center" v-if="contact">
-                    <img :src="'storage/profile_images/' + contact.profile_image" :alt="contact.name"
-                         class="rounded-circle contact-image" v-if="contact.profile_image">
-                    <div class="avatar-placeholder bg-white text-primary d-flex align-items-center justify-content-center rounded-circle" v-else>
+                    <img :src="getAvatarUrl(contact)" :alt="contact.name"
+                         class="contact-image" v-if="contact.profile_image && contact.profile_image !== 'default_image.png'">
+                    <div class="avatar-placeholder bg-white text-primary d-flex align-items-center justify-content-center" v-else>
                         {{ contact.name ? contact.name.charAt(0).toUpperCase() : 'U' }}
                     </div>
                 </div>
@@ -47,6 +47,20 @@ export default {
         getIdString(value) {
             if (!value) return '';
             return (value.$oid ? value.$oid : value).toString();
+        },
+        getAvatarUrl(contact) {
+            if (!contact || !contact.profile_image || contact.profile_image === 'default_image.png') {
+                return 'https://via.placeholder.com/50/6366f1/ffffff?text=' + (contact ? contact.name.charAt(0).toUpperCase() : 'U');
+            }
+            
+            // Check if it's a Cloudinary URL
+            if (contact.profile_image.includes('res.cloudinary.com')) {
+                // Return optimized Cloudinary URL
+                return contact.profile_image.replace('/upload/', '/upload/w_50,h_50,c_fill,g_face,q_auto,f_auto/');
+            }
+            
+            // Fallback to storage URL
+            return 'storage/profile_images/' + contact.profile_image;
         },
         sendMessage(text) {
             if (!this.contact) {

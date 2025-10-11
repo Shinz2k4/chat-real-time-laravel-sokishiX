@@ -13,8 +13,9 @@ class BaseMongoModel extends MongoModel
      */
     public function freshTimestamp(): UTCDateTime
     {
-        // Carbon::now()->valueOf() returns milliseconds since epoch
-        return new UTCDateTime((int) Carbon::now()->valueOf());
+        // Get current timestamp in milliseconds
+        $timestamp = (int) (microtime(true) * 1000);
+        return new UTCDateTime($timestamp);
     }
 
     /**
@@ -31,7 +32,7 @@ class BaseMongoModel extends MongoModel
         } else {
             $carbon = Carbon::parse($value);
         }
-        return new UTCDateTime((int) $carbon->valueOf());
+        return new UTCDateTime((int) ($carbon->timestamp * 1000));
     }
 }
 

@@ -7,6 +7,7 @@ export default defineConfig({
         laravel({
             input: [
                 'resources/css/app.css',
+                'resources/css/sokishix-app.css',
                 'resources/js/app.js',
             ],
             refresh: true,

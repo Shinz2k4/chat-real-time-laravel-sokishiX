@@ -20,31 +20,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <!-- Scripts -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
-    <!-- Additional Styles -->
-    <style>
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            min-height: 100vh;
-        }
-        
-        .bg-gradient-primary {
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
-        }
-        
-        .bg-gradient-dark {
-            background: linear-gradient(135deg, #1f2937 0%, #374151 100%) !important;
-        }
-        
-        .text-gradient {
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-    </style>
+    @vite(['resources/css/app.css', 'resources/css/sokishix-app.css', 'resources/js/app.js'])
 </head>
 <body>
 <div id="app">
@@ -85,16 +61,86 @@
                         @endif
                     @else
                         <li class="nav-item dropdown">
-                            <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button"
+                            <a id="navbarDropdown" class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button"
                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                {{ Auth::user()->name }}
+                                <!-- User Avatar -->
+                                <div class="user-avatar me-2">
+                                    @if(Auth::user()->profile_image && Auth::user()->profile_image !== 'default_image.png')
+                                        <img src="{{ Auth::user()->getAvatarUrl() }}" 
+                                             alt="{{ Auth::user()->name }}" 
+                                             class="rounded-circle user-avatar-img">
+                                    @else
+                                        <div class="user-avatar-placeholder bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
+                                            {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                                        </div>
+                                    @endif
+                                </div>
+                                <!-- User Name -->
+                                <div class="user-info">
+                                    <span class="user-name">{{ Auth::user()->name }}</span>
+                                    <small class="user-status text-muted d-block">Online</small>
+                                </div>
+                                <!-- Dropdown Arrow -->
+                                <i class="fas fa-chevron-down ms-2 text-muted"></i>
                             </a>
 
-                            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                <a class="dropdown-item" href="{{ route('logout') }}"
-                                   onclick="event.preventDefault();
-                                                     document.getElementById('logout-form').submit();">
-                                    {{ __('Logout') }}
+                            <div class="dropdown-menu dropdown-menu-end user-dropdown" aria-labelledby="navbarDropdown">
+                                <!-- User Info Header -->
+                                <div class="dropdown-header user-dropdown-header">
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar me-3">
+                                            @if(Auth::user()->profile_image && Auth::user()->profile_image !== 'default_image.png')
+                                                <img src="{{ Auth::user()->getAvatarUrl() }}" 
+                                                     alt="{{ Auth::user()->name }}" 
+                                                     class="rounded-circle user-avatar-img">
+                                            @else
+                                                <div class="user-avatar-placeholder bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
+                                                    {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0 user-name">{{ Auth::user()->name }}</h6>
+                                            <small class="text-muted">{{ Auth::user()->email }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="dropdown-divider"></div>
+                                
+                                <!-- Profile Actions -->
+                                <a class="dropdown-item" href="{{ route('profile.index') }}">
+                                    <i class="fas fa-user-circle me-3"></i>
+                                    <span>Thông tin cá nhân</span>
+                                </a>
+                                <a class="dropdown-item" href="{{ route('profile.edit') }}">
+                                    <i class="fas fa-edit me-3"></i>
+                                    <span>Chỉnh sửa thông tin</span>
+                                </a>
+                                <a class="dropdown-item" href="{{ route('profile.change-password') }}">
+                                    <i class="fas fa-key me-3"></i>
+                                    <span>Đổi mật khẩu</span>
+                                </a>
+                                
+                                <div class="dropdown-divider"></div>
+                                
+                                <!-- Settings -->
+                                <a class="dropdown-item" href="#" onclick="alert('Tính năng đang phát triển')">
+                                    <i class="fas fa-cog me-3"></i>
+                                    <span>Cài đặt</span>
+                                </a>
+                                <a class="dropdown-item" href="#" onclick="alert('Tính năng đang phát triển')">
+                                    <i class="fas fa-bell me-3"></i>
+                                    <span>Thông báo</span>
+                                </a>
+                                
+                                <div class="dropdown-divider"></div>
+                                
+                                <!-- Logout -->
+                                <a class="dropdown-item text-danger" href="{{ route('logout') }}"
+                                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                    <i class="fas fa-sign-out-alt me-3"></i>
+                                    <span>Đăng xuất</span>
                                 </a>
 
                                 <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
@@ -112,5 +158,51 @@
         @yield('content')
     </main>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // User dropdown enhancement
+    const userDropdown = document.getElementById('navbarDropdown');
+    const dropdownMenu = document.querySelector('.user-dropdown');
+    
+    if (userDropdown && dropdownMenu) {
+        // Add smooth animations
+        userDropdown.addEventListener('show.bs.dropdown', function() {
+            dropdownMenu.style.opacity = '0';
+            dropdownMenu.style.transform = 'translateY(-10px)';
+        });
+        
+        userDropdown.addEventListener('shown.bs.dropdown', function() {
+            dropdownMenu.style.transition = 'all 0.3s ease';
+            dropdownMenu.style.opacity = '1';
+            dropdownMenu.style.transform = 'translateY(0)';
+        });
+        
+        userDropdown.addEventListener('hide.bs.dropdown', function() {
+            dropdownMenu.style.opacity = '0';
+            dropdownMenu.style.transform = 'translateY(-10px)';
+        });
+        
+        // Add click outside to close
+        document.addEventListener('click', function(e) {
+            if (!userDropdown.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                const bsDropdown = new bootstrap.Dropdown(userDropdown);
+                bsDropdown.hide();
+            }
+        });
+    }
+    
+    // Add loading state for dropdown items
+    const dropdownItems = document.querySelectorAll('.user-dropdown .dropdown-item[href]');
+    dropdownItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            if (!this.href.includes('#')) {
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-3"></i><span>Đang tải...</span>';
+            }
+        });
+    });
+});
+</script>
+
 </body>
 </html>

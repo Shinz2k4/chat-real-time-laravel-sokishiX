@@ -1,0 +1,18 @@
+/* ========================================
+   SokishiX Chat Application Styles
+   ======================================== */
+
+/* Import CSS Modules */
+@import './modules/_variables.css';
+@import './modules/_base.css';
+@import './modules/_utilities.css';
+@import './modules/_components.css';
+@import './modules/_layout.css';
+@import './modules/_pages.css';
+@import './modules/_animations.css';
+
+/* ========================================
+   Application-Specific Overrides
+   ======================================== */
+
+/* Custom overrides for specific components that need special handling */
