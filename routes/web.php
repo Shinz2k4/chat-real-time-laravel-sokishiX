@@ -3,6 +3,7 @@
 use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\WebSocketController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use Illuminate\Support\Facades\Auth;
@@ -39,9 +40,19 @@ Route::post('/password/reset', [ResetPasswordController::class, 'reset'])->name(
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Route::middleware('auth')->group(function () {
+    // Chat routes
     Route::get('/contacts', [ContactsController::class, 'get']);
+    Route::get('/contacts/preload', [ContactsController::class, 'preloadConversations']);
     Route::post('/conversation/send', [ContactsController::class, 'send']);
     Route::get('/conversation/{id}', [ContactsController::class, 'getMessagesFor']);
+    
+    // WebSocket routes
+    Route::get('/websocket/info', [WebSocketController::class, 'getConnectionInfo']);
+    Route::post('/websocket/test', [WebSocketController::class, 'testConnection']);
+    Route::post('/websocket/typing', [WebSocketController::class, 'sendTyping']);
+    Route::post('/websocket/read', [WebSocketController::class, 'markMessageRead']);
+    Route::post('/websocket/online', [WebSocketController::class, 'setOnlineStatus']);
+    Route::get('/websocket/preload-realtime', [WebSocketController::class, 'getPreloadedConversationsWithRealtime']);
     
     // Profile management routes
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');

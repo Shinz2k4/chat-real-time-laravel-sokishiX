@@ -43,7 +43,7 @@ return [
     /**
      * Route to get cloud_image_url from Blade Upload Widget
      */
-    'upload_route' => env('CLOUDINARY_UPLOAD_ROUTE'),
+    'upload_route' => null,
 
     /**
      * Controller action to get cloud_image_url from Blade Upload Widget

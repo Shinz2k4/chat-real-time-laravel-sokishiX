@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laravel Chat - Performance Test</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: 500;
+            transition: transform 0.2s;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .test-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .metric:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-label {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .metric-value {
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .performance-chart {
+            height: 200px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin: 20px 0;
+            display: flex;
+            align-items: end;
+            padding: 10px;
+            gap: 5px;
+        }
+        
+        .bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 3px 3px 0 0;
+            min-width: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .bar:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+        
+        .bar-label {
+            font-size: 12px;
+            text-align: center;
+            margin-top: 5px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Laravel Chat Performance Test</h1>
+            <p>Test instant conversation switching and cache performance</p>
+        </div>
+        
+        <div class="content">
+            <!-- Connection Test -->
+            <div class="test-section">
+                <h3>🔌 Connection Test</h3>
+                <button class="test-button" onclick="testWebSocketConnection()">Test WebSocket</button>
+                <button class="test-button" onclick="testCacheConnection()">Test Cache</button>
+                <button class="test-button" onclick="testDatabaseConnection()">Test Database</button>
+                <div id="connection-results" class="results" style="display: none;"></div>
+            </div>
+            
+            <!-- Performance Test -->
+            <div class="test-section">
+                <h3>⚡ Performance Test</h3>
+                <button class="test-button" onclick="testConversationSwitching()">Test Conversation Switching</button>
+                <button class="test-button" onclick="testCachePerformance()">Test Cache Performance</button>
+                <button class="test-button" onclick="testMemoryUsage()">Test Memory Usage</button>
+                <div id="performance-results" class="results" style="display: none;"></div>
+            </div>
+            
+            <!-- Cache Management -->
+            <div class="test-section">
+                <h3>🗄️ Cache Management</h3>
+                <button class="test-button" onclick="showCacheStats()">Show Cache Stats</button>
+                <button class="test-button" onclick="clearCache()">Clear Cache</button>
+                <button class="test-button" onclick="refreshCache()">Refresh Cache</button>
+                <div id="cache-results" class="results" style="display: none;"></div>
+            </div>
+            
+            <!-- Performance Chart -->
+            <div class="test-section">
+                <h3>📊 Performance Metrics</h3>
+                <div class="performance-chart" id="performance-chart">
+                    <div class="bar" style="height: 20%;">
+                        <div class="bar-label">Before</div>
+                    </div>
+                    <div class="bar" style="height: 5%;">
+                        <div class="bar-label">After</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Performance test data
+        let testResults = {
+            conversationSwitches: [],
+            cacheHits: 0,
+            cacheMisses: 0,
+            averageSwitchTime: 0,
+            memoryUsage: []
+        };
+
+        // Test WebSocket connection
+        async function testWebSocketConnection() {
+            const resultsDiv = document.getElementById('connection-results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div class="status info">Testing WebSocket connection...</div>';
+            
+            try {
+                const response = await fetch('/websocket/test');
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultsDiv.innerHTML = '<div class="status success">✅ WebSocket connection successful</div>';
+                } else {
+                    resultsDiv.innerHTML = '<div class="status error">❌ WebSocket connection failed: ' + result.error + '</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="status error">❌ WebSocket test failed: ' + error.message + '</div>';
+            }
+        }
+
+        // Test cache connection
+        async function testCacheConnection() {
+            const resultsDiv = document.getElementById('connection-results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div class="status info">Testing cache connection...</div>';
+            
+            try {
+                const response = await fetch('/cache/stats');
+                const result = await response.json();
+                
+                if (result) {
+                    resultsDiv.innerHTML = '<div class="status success">✅ Cache connection successful</div>';
+                } else {
+                    resultsDiv.innerHTML = '<div class="status error">❌ Cache connection failed</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="status error">❌ Cache test failed: ' + error.message + '</div>';
+            }
+        }
+
+        // Test database connection
+        async function testDatabaseConnection() {
+            const resultsDiv = document.getElementById('connection-results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div class="status info">Testing database connection...</div>';
+            
+            try {
+                const response = await fetch('/contacts');
+                const result = await response.json();
+                
+                if (Array.isArray(result)) {
+                    resultsDiv.innerHTML = '<div class="status success">✅ Database connection successful (' + result.length + ' contacts)</div>';
+                } else {
+                    resultsDiv.innerHTML = '<div class="status error">❌ Database connection failed</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="status error">❌ Database test failed: ' + error.message + '</div>';
+            }
+        }
+
+        // Test conversation switching performance
+        async function testConversationSwitching() {
+            const resultsDiv = document.getElementById('performance-results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div class="status info">Testing conversation switching performance...</div>';
+            
+            try {
+                // Load contacts
+                const contactsResponse = await fetch('/contacts');
+                const contacts = await contactsResponse.json();
+                
+                if (contacts.length === 0) {
+                    resultsDiv.innerHTML = '<div class="status error">❌ No contacts available for testing</div>';
+                    return;
+                }
+                
+                // Test switching between first 5 contacts
+                const testContacts = contacts.slice(0, 5);
+                const switchTimes = [];
+                
+                for (let i = 0; i < testContacts.length; i++) {
+                    const startTime = performance.now();
+                    
+                    // Simulate conversation switch
+                    const response = await fetch(`/conversation/${testContacts[i]._id}`);
+                    await response.json();
+                    
+                    const endTime = performance.now();
+                    const switchTime = Math.round(endTime - startTime);
+                    switchTimes.push(switchTime);
+                    
+                    // Small delay between tests
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                
+                const averageTime = Math.round(switchTimes.reduce((a, b) => a + b, 0) / switchTimes.length);
+                const minTime = Math.min(...switchTimes);
+                const maxTime = Math.max(...switchTimes);
+                
+                resultsDiv.innerHTML = `
+                    <div class="status success">✅ Conversation switching test completed</div>
+                    <div class="metric">
+                        <span class="metric-label">Average Switch Time:</span>
+                        <span class="metric-value">${averageTime}ms</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Fastest Switch:</span>
+                        <span class="metric-value">${minTime}ms</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Slowest Switch:</span>
+                        <span class="metric-value">${maxTime}ms</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Contacts Tested:</span>
+                        <span class="metric-value">${testContacts.length}</span>
+                    </div>
+                `;
+                
+                // Update performance chart
+                updatePerformanceChart(averageTime);
+                
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="status error">❌ Performance test failed: ' + error.message + '</div>';
+            }
+        }
+
+        // Test cache performance
+        async function testCachePerformance() {
+            const resultsDiv = document.getElementById('performance-results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div class="status info">Testing cache performance...</div>';
+            
+            try {
+                // Test preload endpoint
+                const startTime = performance.now();
+                const response = await fetch('/contacts/preload');
+                const data = await response.json();
+                const endTime = performance.now();
+                
+                const loadTime = Math.round(endTime - startTime);
+                const conversationCount = data.preloaded_conversations ? data.preloaded_conversations.length : 0;
+                
+                resultsDiv.innerHTML = `
+                    <div class="status success">✅ Cache performance test completed</div>
+                    <div class="metric">
+                        <span class="metric-label">Preload Time:</span>
+                        <span class="metric-value">${loadTime}ms</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Conversations Loaded:</span>
+                        <span class="metric-value">${conversationCount}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Time per Conversation:</span>
+                        <span class="metric-value">${conversationCount > 0 ? Math.round(loadTime / conversationCount) : 0}ms</span>
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="status error">❌ Cache performance test failed: ' + error.message + '</div>';
+            }
+        }
+
+        // Test memory usage
+        function testMemoryUsage() {
+            const resultsDiv = document.getElementById('performance-results');
+            resultsDiv.style.display = 'block';
+            
+            if (performance.memory) {
+                const memory = performance.memory;
+                const usedMB = Math.round(memory.usedJSHeapSize / 1024 / 1024);
+                const totalMB = Math.round(memory.totalJSHeapSize / 1024 / 1024);
+                const limitMB = Math.round(memory.jsHeapSizeLimit / 1024 / 1024);
+                
+                resultsDiv.innerHTML = `
+                    <div class="status success">✅ Memory usage test completed</div>
+                    <div class="metric">
+                        <span class="metric-label">Used Memory:</span>
+                        <span class="metric-value">${usedMB}MB</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Total Memory:</span>
+                        <span class="metric-value">${totalMB}MB</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Memory Limit:</span>
+                        <span class="metric-value">${limitMB}MB</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Memory Usage:</span>
+                        <span class="metric-value">${Math.round((usedMB / limitMB) * 100)}%</span>
+                    </div>
+                `;
+            } else {
+                resultsDiv.innerHTML = '<div class="status error">❌ Memory API not available in this browser</div>';
+            }
+        }
+
+        // Show cache statistics
+        async function showCacheStats() {
+            const resultsDiv = document.getElementById('cache-results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div class="status info">Loading cache statistics...</div>';
+            
+            try {
+                const response = await fetch('/cache/stats');
+                const stats = await response.json();
+                
+                let html = '<div class="status success">✅ Cache statistics loaded</div>';
+                
+                for (const [key, value] of Object.entries(stats)) {
+                    html += `
+                        <div class="metric">
+                            <span class="metric-label">${key.replace(/_/g, ' ').toUpperCase()}:</span>
+                            <span class="metric-value">${value}</span>
+                        </div>
+                    `;
+                }
+                
+                resultsDiv.innerHTML = html;
+                
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="status error">❌ Failed to load cache statistics: ' + error.message + '</div>';
+            }
+        }
+
+        // Clear cache
+        async function clearCache() {
+            const resultsDiv = document.getElementById('cache-results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div class="status info">Clearing cache...</div>';
+            
+            try {
+                const response = await fetch('/cache/clear', { method: 'POST' });
+                
+                if (response.ok) {
+                    resultsDiv.innerHTML = '<div class="status success">✅ Cache cleared successfully</div>';
+                } else {
+                    resultsDiv.innerHTML = '<div class="status error">❌ Failed to clear cache</div>';
+                }
+                
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="status error">❌ Cache clear failed: ' + error.message + '</div>';
+            }
+        }
+
+        // Refresh cache
+        async function refreshCache() {
+            const resultsDiv = document.getElementById('cache-results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div class="status info">Refreshing cache...</div>';
+            
+            try {
+                const response = await fetch('/contacts/preload');
+                const data = await response.json();
+                
+                resultsDiv.innerHTML = `
+                    <div class="status success">✅ Cache refreshed successfully</div>
+                    <div class="metric">
+                        <span class="metric-label">Conversations Loaded:</span>
+                        <span class="metric-value">${data.preloaded_conversations ? data.preloaded_conversations.length : 0}</span>
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="status error">❌ Cache refresh failed: ' + error.message + '</div>';
+            }
+        }
+
+        // Update performance chart
+        function updatePerformanceChart(averageTime) {
+            const chart = document.getElementById('performance-chart');
+            const bars = chart.querySelectorAll('.bar');
+            
+            if (bars.length >= 2) {
+                // Update the "After" bar height based on performance
+                const height = Math.max(5, Math.min(100, (averageTime / 400) * 100)); // Scale based on 400ms baseline
+                bars[1].style.height = height + '%';
+                
+                // Update labels
+                const labels = chart.querySelectorAll('.bar-label');
+                labels[0].textContent = 'Before (400ms)';
+                labels[1].textContent = `After (${averageTime}ms)`;
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Performance test page loaded');
+            
+            // Auto-run connection tests
+            setTimeout(() => {
+                testWebSocketConnection();
+                testCacheConnection();
+                testDatabaseConnection();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
+

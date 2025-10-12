@@ -83,6 +83,8 @@ composer install --no-interaction --prefer-dist --no-progress
 php artisan key:generate
 ```
 
+**Note**: If you encounter MongoDB extension version conflicts, the project is configured to handle this automatically. The `composer.json` includes platform configuration to work with different MongoDB extension versions.
+
 3. Frontend deps and dev server:
 ```
 npm install
