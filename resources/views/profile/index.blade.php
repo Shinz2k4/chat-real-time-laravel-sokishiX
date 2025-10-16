@@ -3,15 +3,19 @@
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header bg-gradient-primary text-white">
-                    <h4 class="mb-0">
-                        <i class="fas fa-user-circle me-2"></i>
-                        Thông tin cá nhân
+        <div class="col-lg-10">
+            <div class="card profile-card shadow-sm">
+                <div class="card-header bg-gradient-primary text-white d-flex align-items-center justify-content-between">
+                    <h4 class="mb-0 d-flex align-items-center gap-2">
+                        <i class="fas fa-user-circle"></i>
+                        Hồ sơ của bạn
                     </h4>
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="{{ route('profile.edit') }}" class="btn btn-light btn-sm"><i class="fas fa-edit me-1"></i>Chỉnh sửa</a>
+                        <a href="{{ route('profile.change-password') }}" class="btn btn-outline-light btn-sm"><i class="fas fa-key me-1"></i>Mật khẩu</a>
+                    </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     @if (session('success'))
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
                             <i class="fas fa-check-circle me-2"></i>
@@ -28,32 +32,39 @@
                         </div>
                     @endif
 
-                    <div class="row">
+                    <div class="row g-4">
                         <!-- Profile Image Section -->
-                        <div class="col-md-4 text-center">
-                            <div class="profile-image-container mb-4">
+                        <div class="col-md-4">
+                            <div class="d-flex flex-column align-items-center">
+                                <div class="profile-image-container mb-3">
                                 @if($user->profile_image && $user->profile_image !== 'default_image.png')
-                                    <img src="{{ $user->getAvatarUrl() }}" 
+                                    <img src="{{ $user->getAvatarUrl(['width'=>300,'height'=>300]) }}" 
                                          alt="{{ $user->name }}" 
-                                         class="profile-image-large rounded-circle shadow">
+                                         class="profile-image-large rounded-circle shadow"
+                                         style="cursor:pointer" data-bs-toggle="modal" data-bs-target="#avatarModal">
                                 @else
                                     <div class="profile-placeholder-large bg-primary text-white rounded-circle shadow d-flex align-items-center justify-content-center">
                                         {{ strtoupper(substr($user->name, 0, 1)) }}
                                     </div>
                                 @endif
+                                </div>
+                                <div class="text-center">
+                                    <div class="badge bg-light text-dark border me-2"><i class="fas fa-at me-1"></i>{{ $user->username }}</div>
+                                    <div class="badge bg-light text-dark border"><i class="fas fa-calendar-alt me-1"></i>Tham gia {{ \Carbon\Carbon::parse($user->created_at)->format('d/m/Y') }}</div>
+                                </div>
                             </div>
                             
-                            <div class="btn-group-vertical w-100" role="group">
-                                <a href="{{ route('profile.edit') }}" class="btn btn-outline-primary mb-2">
+                            <div class="d-grid gap-2 mt-3">
+                                <a href="{{ route('profile.edit') }}" class="btn btn-outline-primary">
                                     <i class="fas fa-edit me-2"></i>
                                     Chỉnh sửa thông tin
                                 </a>
-                                <a href="{{ route('profile.change-password') }}" class="btn btn-outline-warning mb-2">
+                                <a href="{{ route('profile.change-password') }}" class="btn btn-outline-warning">
                                     <i class="fas fa-key me-2"></i>
                                     Đổi mật khẩu
                                 </a>
                                 @if($user->hasCustomAvatar())
-                                    <form action="{{ route('profile.delete-avatar') }}" method="POST" class="d-inline">
+                                    <form action="{{ route('profile.delete-avatar') }}" method="POST" class="d-grid">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-outline-danger" 
@@ -69,10 +80,13 @@
                         <!-- Profile Information -->
                         <div class="col-md-8">
                             <div class="profile-info">
-                                <h5 class="text-primary mb-4">
-                                    <i class="fas fa-user me-2"></i>
-                                    Thông tin cá nhân
-                                </h5>
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <h5 class="text-primary mb-0 d-flex align-items-center gap-2">
+                                        <i class="fas fa-user"></i>
+                                        Thông tin cá nhân
+                                    </h5>
+                                    <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-primary"><i class="fas fa-pen me-1"></i>Sửa</a>
+                                </div>
 
                                 <div class="row mb-3">
                                     <div class="col-sm-3">
@@ -111,7 +125,7 @@
                                     </div>
                                 </div>
 
-                                <div class="row mb-3">
+                                <div class="row mb-0">
                                     <div class="col-sm-3">
                                         <strong class="text-muted">Cập nhật lần cuối:</strong>
                                     </div>
@@ -126,8 +140,8 @@
                     <!-- Quick Actions -->
                     <div class="row mt-4">
                         <div class="col-12">
-                            <h5 class="text-primary mb-3">
-                                <i class="fas fa-cogs me-2"></i>
+                            <h5 class="text-primary mb-3 d-flex align-items-center gap-2">
+                                <i class="fas fa-cogs"></i>
                                 Thao tác nhanh
                             </h5>
                             <div class="row">
@@ -172,17 +186,19 @@
 
 <style>
 .profile-image-large {
-    width: 150px;
-    height: 150px;
+    width: 140px;
+    height: 140px;
     object-fit: cover;
-    border: 4px solid #fff;
+    border: 3px solid #fff;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
 }
 
 .profile-placeholder-large {
-    width: 150px;
-    height: 150px;
-    font-size: 4rem;
+    width: 140px;
+    height: 140px;
+    font-size: 3.5rem;
     margin: 0 auto;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
 }
 
 .profile-image-container {
@@ -191,20 +207,41 @@
 }
 
 .profile-info .row {
-    border-bottom: 1px solid #f0f0f0;
-    padding: 10px 0;
+    border-bottom: 1px dashed #e5e7eb;
+    padding: 12px 0;
 }
 
 .profile-info .row:last-child {
     border-bottom: none;
 }
 
-.card {
-    transition: transform 0.2s ease-in-out;
-}
+.card { transition: transform 0.2s ease-in-out, box-shadow .2s ease; border-radius: 14px; }
+.card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+.profile-card .card-header { padding: 16px 20px; }
+.profile-card .card-body { background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%); }
+.badge.border { border: 1px solid #e5e7eb; border-radius: 999px; padding: 6px 10px; font-weight: 600; }
+.btn-outline-warning { border-color: #f59e0b; color: #b45309; }
+.btn-outline-warning:hover { background: #f59e0b; color: #fff; }
+.btn-outline-primary { border-color: #6366f1; color: #4338ca; }
+.btn-outline-primary:hover { background: #6366f1; color: #fff; }
+.btn-outline-danger { border-color: #ef4444; color: #991b1b; }
+.btn-outline-danger:hover { background: #ef4444; color: #fff; }
+.btn-outline-light { border-color: rgba(255,255,255,0.6); }
 
-.card:hover {
-    transform: translateY(-2px);
-}
+/* Professional modal image viewer */
+.avatar-viewer { background: #0f172a; min-height: 60vh; max-height: 75vh; overflow: hidden; }
+.avatar-viewer-img { max-width: 100%; max-height: 75vh; object-fit: contain; }
 </style>
+<!-- Avatar Modal -->
+<div class="modal fade" id="avatarModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      
+    </div>
+  </div>
+</div>
 @endsection

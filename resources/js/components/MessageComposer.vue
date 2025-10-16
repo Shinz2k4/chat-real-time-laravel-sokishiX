@@ -1,22 +1,53 @@
 <template>
-    <div id="emojyPicker"></div>
-    <div class="message-composer">
-        <div class="composer-input-group">
-            <button class="btn btn-outline-secondary emoji-btn" @click="pickEmojy" type="button">
-                <i class="fas fa-smile"></i>
+    <div id="emojyPicker" class="mb-2"></div>
+    <div class="message-composer py-3 px-3 bg-white border-top" style="box-shadow: 0 -1px 4px rgba(0,0,0,0.03);">
+        <div class="composer-input-group d-flex align-items-end gap-2">
+            <button 
+                class="btn btn-outline-secondary emoji-btn d-flex align-items-center justify-content-center" 
+                @click="pickEmojy" 
+                type="button"
+                style="width: 40px; height: 40px; border-radius: 100%;"
+                title="Chèn emoji"
+            >
+                <i class="fas fa-smile fs-5"></i>
             </button>
-            <div class="input-wrapper">
+            <button 
+                class="btn btn-outline-secondary emoji-btn d-flex align-items-center justify-content-center" 
+                type="button"
+                @click="triggerFile"
+                style="width: 40px; height: 40px; border-radius: 100%;"
+                title="Đính kèm ảnh/tệp"
+            >
+                <i class="fas fa-paperclip fs-5"></i>
+            </button>
+            <div class="input-wrapper flex-grow-1">
                 <textarea 
-                    class="form-control message-input" 
-                    placeholder="Type your message here..." 
+                    class="form-control message-input border-0 shadow-none px-3 py-2" 
+                    placeholder="Nhập tin nhắn..."
                     v-model="message"
                     @keydown.enter="send" 
-                    rows="1" 
-                    style="resize: none">
-                </textarea>
+                    rows="1"
+                    style="resize: none; background: #f9f9fa; border-radius: 18px; min-height: 40px; font-size: 1rem;"
+                ></textarea>
+                <div v-if="attachment" class="mt-2 d-flex align-items-center gap-2">
+                    <span class="badge bg-light text-dark border px-2 py-1">
+                        <i class="fas fa-file me-1"></i>{{ attachment.name }} ({{ prettySize(attachment.size) }})
+                    </span>
+                    <button class="btn btn-sm btn-outline-secondary" @click="clearAttachment" type="button">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <input ref="fileInput" type="file" class="d-none" @change="onFileChange" />
             </div>
-            <button class="btn btn-primary send-btn" type="button" @click="send" :disabled="!message.trim()">
-                <i class="fas fa-paper-plane"></i>
+            <button 
+                class="btn btn-primary send-btn d-flex align-items-center justify-content-center" 
+                type="button" 
+                @click="send" 
+                :disabled="!canSend"
+                style="width: 40px; height: 40px; border-radius: 100%;"
+                title="Gửi"
+            >
+                <i class="fas fa-paper-plane fs-5"></i>
             </button>
         </div>
     </div>
@@ -32,16 +63,35 @@ export default {
         return {
             message: '',
             toggle_emojy: false,
+            attachment: null,
         }
     },
     methods: {
         send(e) {
             e.preventDefault();
-            if (this.message === '') {
+            if (!this.canSend) {
                 return;
             }
-            this.$emit('send', this.message);
+            this.$emit('send', { text: this.message, file: this.attachment });
             this.message = '';
+            this.clearAttachment();
+        },
+        triggerFile() {
+            this.$refs.fileInput && this.$refs.fileInput.click();
+        },
+        onFileChange(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            if (file.size > 20 * 1024 * 1024) {
+                alert('Kích thước tệp tối đa 20MB');
+                event.target.value = '';
+                return;
+            }
+            this.attachment = file;
+        },
+        clearAttachment() {
+            this.attachment = null;
+            if (this.$refs.fileInput) this.$refs.fileInput.value = '';
         },
         pickEmojy() {
             const rootElement = document.querySelector('#emojyPicker');
@@ -57,8 +107,18 @@ export default {
             picker.addEventListener('emoji:select', event => {
                 this.message += event.emoji;
             });
+        },
+        prettySize(size) {
+            if (size < 1024) return size + ' B';
+            if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB';
+            return (size / (1024*1024)).toFixed(1) + ' MB';
         }
     },
+    computed: {
+        canSend() {
+            return (this.message && this.message.trim().length > 0) || !!this.attachment;
+        }
+    }
 }
 </script>
 

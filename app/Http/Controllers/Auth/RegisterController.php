@@ -72,10 +72,12 @@ class RegisterController extends Controller
     {
         return Validator::make($data, [
             'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:50', 'alpha_dash', 'unique:users'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'phone' => ['required', 'string', 'max:20', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'profile_image' => ['mimes:jpeg,jpg,png', 'max:1024'],
+            // allow up to 10MB, accept common image types
+            'profile_image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:10240'],
         ]);
     }
 
@@ -90,12 +92,14 @@ class RegisterController extends Controller
         // Handle profile image upload
         $profileImageUrl = 'default_image.png';
         
-        if (isset($data['profile_image'])) {
+        // Always retrieve file from request to ensure UploadedFile instance
+        $uploadedFile = request()->file('profile_image');
+        if ($uploadedFile) {
             // Generate a temporary user ID for upload
             $tempUserId = 'temp_' . time() . '_' . rand(1000, 9999);
             
             // Upload to Cloudinary
-            $uploadResult = CloudinaryService::uploadAvatar($data['profile_image'], $tempUserId);
+            $uploadResult = CloudinaryService::uploadAvatar($uploadedFile, $tempUserId);
             
             if ($uploadResult['success']) {
                 $profileImageUrl = $uploadResult['secure_url'];
@@ -127,6 +131,7 @@ class RegisterController extends Controller
         session([
             'pending_user' => [
                 'name' => $data['name'],
+                'username' => $data['username'],
                 'email' => $data['email'],
                 'phone' => $data['phone'],
                 'password' => Hash::make($data['password']),

@@ -62,14 +62,26 @@ export default {
             // Fallback to storage URL
             return 'storage/profile_images/' + contact.profile_image;
         },
-        sendMessage(text) {
+        sendMessage(payload) {
             if (!this.contact) {
                 return;
             }
-            axios.post('/conversation/send', {
-                contact_id: this.getIdString(this.contact._id),
-                text: text,
-            }).then(response => {
+            const hasFile = payload && payload.file;
+            const url = '/conversation/send';
+            let request;
+            if (hasFile) {
+                const form = new FormData();
+                form.append('contact_id', this.getIdString(this.contact._id));
+                if (payload.text) form.append('text', payload.text);
+                form.append('attachment', payload.file);
+                request = axios.post(url, form, { headers: { 'Content-Type': 'multipart/form-data' }});
+            } else {
+                request = axios.post(url, {
+                    contact_id: this.getIdString(this.contact._id),
+                    text: payload.text,
+                });
+            }
+            request.then(response => {
                 // backend trả về message đúng; chỉ emit khi message thuộc đoạn hội thoại đang mở
                 const toId = this.getIdString(response.data && response.data.to);
                 const contactId = this.getIdString(this.contact && this.contact._id);

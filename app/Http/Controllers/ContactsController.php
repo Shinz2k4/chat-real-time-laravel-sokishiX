@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Events\NewMessage;
 use App\Models\Message;
+use App\Services\CloudinaryService;
 use App\Models\User;
+use App\Models\FriendRequest;
 use App\Services\CacheService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,14 +17,21 @@ class ContactsController extends Controller
     {
         $userId = auth()->user()->_id;
         
-        // Try to get cached contacts first
-        $contacts = CacheService::getCachedContacts($userId);
-        if (!$contacts) {
-            $contacts = User::where('_id', '!=', $userId)
-                ->select(['_id', 'name', 'email', 'profile_image'])
-                ->get();
-            CacheService::cacheContacts($userId, $contacts);
+        // Build contact list from accepted friends
+        $accepted = FriendRequest::where(function($q) use ($userId) {
+                $q->where('from_user_id', (string)$userId)->orWhere('to_user_id', (string)$userId);
+            })
+            ->where('status', 'accepted')
+            ->get();
+
+        $friendIds = [];
+        foreach ($accepted as $row) {
+            $friendIds[] = $row->from_user_id == (string)$userId ? $row->to_user_id : $row->from_user_id;
         }
+
+        $contacts = User::whereIn('_id', $friendIds)
+            ->select(['_id', 'name', 'email', 'profile_image'])
+            ->get();
 
         // Try to get cached unread messages count
         $unreadIds = CacheService::getCachedUnreadMessages($userId);
@@ -134,18 +143,33 @@ class ContactsController extends Controller
 
     public function send(Request $request)
     {
+        $hasAttachment = $request->hasFile('attachment');
         // Validate request
         $request->validate([
             'contact_id' => 'required|string',
-            'text' => 'required|string|max:1000'
+            'text' => $hasAttachment ? 'nullable|string|max:2000' : 'required|string|max:1000',
+            'attachment' => 'nullable|file|max:20480' // 20MB
         ]);
 
-        $message = Message::create([
+        $data = [
             'from' => (string) auth()->user()->_id,
             'to' => (string) $request->contact_id,
-            'text' => $request->text,
+            'text' => (string) ($request->text ?? ''),
             'read' => false
-        ]);
+        ];
+
+        if ($hasAttachment) {
+            $upload = CloudinaryService::uploadMessageAttachment($request->file('attachment'), (string) auth()->user()->_id);
+            if (!$upload['success']) {
+                return response()->json(['message' => $upload['error'] ?? 'Upload failed'], 422);
+            }
+            $data['attachment_url'] = $upload['secure_url'] ?? $upload['url'] ?? null;
+            $data['attachment_type'] = $upload['mime'] ?? null;
+            $data['attachment_name'] = $upload['original_name'] ?? null;
+            $data['attachment_size'] = $upload['bytes'] ?? null;
+        }
+
+        $message = Message::create($data);
 
         // Load the relationship before broadcasting
         $message->load('fromContact');

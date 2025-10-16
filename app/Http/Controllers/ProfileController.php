@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\CloudinaryService;
+use App\Models\FriendRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -18,6 +19,28 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
         return view('profile.index', compact('user'));
+    }
+
+    /**
+     * View another user's profile if friends
+     */
+    public function show(User $user)
+    {
+        $currentId = (string) Auth::id();
+        $targetId = (string) $user->_id;
+
+        if ($currentId !== $targetId) {
+            $isFriend = FriendRequest::where(function($q) use ($currentId, $targetId){
+                    $q->where('from_user_id', $currentId)->where('to_user_id', $targetId);
+                })->orWhere(function($q) use ($currentId, $targetId){
+                    $q->where('from_user_id', $targetId)->where('to_user_id', $currentId);
+                })->where('status','accepted')->exists();
+            if (!$isFriend) {
+                abort(403, 'Bạn chỉ có thể xem hồ sơ khi đã là bạn bè.');
+            }
+        }
+
+        return view('profile.public', ['user' => $user]);
     }
 
     /**

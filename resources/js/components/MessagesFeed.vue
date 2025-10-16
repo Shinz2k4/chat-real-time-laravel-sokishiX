@@ -6,7 +6,14 @@
                 v-for="message in messages" :key="message._id" v-if="messages.length > 0">
 
                 <div class="message-content">
-                    <div class="message-text">{{ message.text }}</div>
+                    <div v-if="message.text" class="message-text">{{ message.text }}</div>
+                    <div v-if="message.attachment_url" class="message-attachment mt-2">
+                        <a :href="message.attachment_url" target="_blank" rel="noopener" v-if="!isImage(message)">
+                            <i class="fas fa-file me-2"></i>{{ message.attachment_name || 'Tệp đính kèm' }}
+                            <span v-if="message.attachment_size" class="text-muted small ms-1">({{ prettySize(message.attachment_size) }})</span>
+                        </a>
+                        <img v-else :src="optimizedImage(message.attachment_url)" class="attachment-image" alt="attachment" />
+                    </div>
                     <div class="message-meta">
                         <span class="message-time">{{ timeAgo(message.created_at) }}</span>
                         <span class="message-status" v-if="message.to === contact._id">
@@ -58,6 +65,23 @@ export default {
                     this.$refs.feed.scrollTop = this.$refs.feed.scrollHeight;
                 }
             });
+        },
+        isImage(message) {
+            const t = message.attachment_type || '';
+            return t.startsWith('image/');
+        },
+        optimizedImage(url) {
+            if (!url) return url;
+            if (url.includes('res.cloudinary.com')) {
+                return url.replace('/upload/', '/upload/w_800,q_auto,f_auto/');
+            }
+            return url;
+        },
+        prettySize(size) {
+            if (!size && size !== 0) return '';
+            if (size < 1024) return size + ' B';
+            if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB';
+            return (size / (1024*1024)).toFixed(1) + ' MB';
         },
         formatTime(time) {
             return moment(time).format('h:mm a');
@@ -196,6 +220,9 @@ export default {
     margin-bottom: 4px;
     word-wrap: break-word;
 }
+
+.message-attachment a { color: inherit; text-decoration: none; }
+.attachment-image { max-width: 260px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.05); }
 
 .message-meta {
     display: flex;

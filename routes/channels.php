@@ -16,3 +16,7 @@ use Illuminate\Support\Facades\Broadcast;
 Broadcast::channel('messages.{id}', function ($user, $id) {
     return (string) $user->_id === (string) $id;
 });
+
+Broadcast::channel('friend-requests.{id}', function ($user, $id) {
+    return (string) $user->_id === (string) $id;
+});

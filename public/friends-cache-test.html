@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friends Cache Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 15px; margin: 5px; border: none; border-radius: 3px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-warning { background-color: #ffc107; color: black; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Friends Cache Test</h1>
+    
+    <div class="test-section info">
+        <h3>Cache Test Instructions</h3>
+        <p>1. Open browser dev tools (F12) and go to Network tab</p>
+        <p>2. Switch to Friends tab in the chat app</p>
+        <p>3. Switch back to Chats tab</p>
+        <p>4. Switch to Friends tab again</p>
+        <p>5. Check if there are new API requests when switching back to Friends tab</p>
+        <p><strong>Expected:</strong> No new API requests should be made when switching back to Friends tab (data should load from cache)</p>
+    </div>
+
+    <div class="test-section">
+        <h3>Cache Status</h3>
+        <button class="btn-primary" onclick="checkCache()">Check Cache Status</button>
+        <button class="btn-warning" onclick="clearCache()">Clear Cache</button>
+        <button class="btn-success" onclick="simulateTabSwitch()">Simulate Tab Switch</button>
+        <div id="cache-status"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Cache Keys</h3>
+        <div id="cache-keys"></div>
+    </div>
+
+    <script>
+        function getCacheKeys() {
+            const keys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('friends_')) {
+                    keys.push(key);
+                }
+            }
+            return keys;
+        }
+
+        function getCacheData(key) {
+            try {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    return {
+                        data: parsed.data,
+                        timestamp: parsed.timestamp,
+                        age: Date.now() - parsed.timestamp,
+                        ageMinutes: Math.round((Date.now() - parsed.timestamp) / 60000)
+                    };
+                }
+            } catch (e) {
+                return null;
+            }
+            return null;
+        }
+
+        function checkCache() {
+            const keys = getCacheKeys();
+            const statusDiv = document.getElementById('cache-status');
+            
+            if (keys.length === 0) {
+                statusDiv.innerHTML = '<div class="error">No cache found</div>';
+                return;
+            }
+
+            let html = '<div class="success">Cache found:</div><ul>';
+            keys.forEach(key => {
+                const data = getCacheData(key);
+                if (data) {
+                    const isStale = data.age > 5 * 60 * 1000; // 5 minutes
+                    const status = isStale ? 'stale' : 'fresh';
+                    const statusClass = isStale ? 'error' : 'success';
+                    html += `<li><strong>${key}</strong>: <span class="${statusClass}">${status}</span> (${data.ageMinutes} minutes old, ${data.data.length} items)</li>`;
+                }
+            });
+            html += '</ul>';
+            statusDiv.innerHTML = html;
+        }
+
+        function clearCache() {
+            const keys = getCacheKeys();
+            keys.forEach(key => localStorage.removeItem(key));
+            document.getElementById('cache-status').innerHTML = '<div class="info">Cache cleared</div>';
+            updateCacheKeys();
+        }
+
+        function simulateTabSwitch() {
+            // Simulate the behavior of switching tabs
+            const keys = getCacheKeys();
+            if (keys.length === 0) {
+                document.getElementById('cache-status').innerHTML = '<div class="error">No cache to test with</div>';
+                return;
+            }
+
+            let html = '<div class="info">Simulating tab switch behavior:</div><ul>';
+            keys.forEach(key => {
+                const data = getCacheData(key);
+                if (data) {
+                    const isStale = data.age > 2 * 60 * 1000; // 2 minutes
+                    const wouldRefresh = isStale;
+                    const action = wouldRefresh ? 'Would refresh from API' : 'Would use cache';
+                    const actionClass = wouldRefresh ? 'error' : 'success';
+                    html += `<li><strong>${key}</strong>: <span class="${actionClass}">${action}</span></li>`;
+                }
+            });
+            html += '</ul>';
+            document.getElementById('cache-status').innerHTML = html;
+        }
+
+        function updateCacheKeys() {
+            const keys = getCacheKeys();
+            const keysDiv = document.getElementById('cache-keys');
+            
+            if (keys.length === 0) {
+                keysDiv.innerHTML = '<div class="info">No cache keys found</div>';
+                return;
+            }
+
+            let html = '<ul>';
+            keys.forEach(key => {
+                const data = getCacheData(key);
+                if (data) {
+                    html += `<li><strong>${key}</strong>: ${data.data.length} items, ${data.ageMinutes} minutes old</li>`;
+                }
+            });
+            html += '</ul>';
+            keysDiv.innerHTML = html;
+        }
+
+        // Update cache keys on page load
+        updateCacheKeys();
+    </script>
+</body>
+</html>
+

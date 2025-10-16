@@ -15,6 +15,8 @@ class CacheService
     const UNREAD_TTL = 60; // 1 minute
     const USER_TTL = 600; // 10 minutes
     const PRELOADED_CONVERSATIONS_TTL = 120; // 2 minutes
+    const FRIENDS_TTL = 300; // 5 minutes
+    const FRIEND_REQUESTS_TTL = 180; // 3 minutes
 
     /**
      * Cache contacts for a user
@@ -182,5 +184,87 @@ class CacheService
         }
 
         return ['driver' => config('cache.default')];
+    }
+
+    /**
+     * Cache friends list for a user
+     */
+    public static function cacheFriends($userId, $friends)
+    {
+        $key = "friends_{$userId}";
+        return Cache::put($key, $friends, self::FRIENDS_TTL);
+    }
+
+    /**
+     * Get cached friends list for a user
+     */
+    public static function getCachedFriends($userId)
+    {
+        $key = "friends_{$userId}";
+        return Cache::get($key);
+    }
+
+    /**
+     * Cache incoming friend requests for a user
+     */
+    public static function cacheIncomingRequests($userId, $requests)
+    {
+        $key = "incoming_requests_{$userId}";
+        return Cache::put($key, $requests, self::FRIEND_REQUESTS_TTL);
+    }
+
+    /**
+     * Get cached incoming friend requests for a user
+     */
+    public static function getCachedIncomingRequests($userId)
+    {
+        $key = "incoming_requests_{$userId}";
+        return Cache::get($key);
+    }
+
+    /**
+     * Cache outgoing friend requests for a user
+     */
+    public static function cacheOutgoingRequests($userId, $requests)
+    {
+        $key = "outgoing_requests_{$userId}";
+        return Cache::put($key, $requests, self::FRIEND_REQUESTS_TTL);
+    }
+
+    /**
+     * Get cached outgoing friend requests for a user
+     */
+    public static function getCachedOutgoingRequests($userId)
+    {
+        $key = "outgoing_requests_{$userId}";
+        return Cache::get($key);
+    }
+
+    /**
+     * Clear all friend-related caches for a user
+     */
+    public static function clearFriendCaches($userId)
+    {
+        $keys = [
+            "friends_{$userId}",
+            "incoming_requests_{$userId}",
+            "outgoing_requests_{$userId}",
+        ];
+
+        foreach ($keys as $key) {
+            Cache::forget($key);
+        }
+
+        Log::info("Cleared friend caches for user: {$userId}");
+    }
+
+    /**
+     * Clear friend caches for multiple users
+     */
+    public static function clearFriendCachesForUsers($userIds)
+    {
+        foreach ($userIds as $userId) {
+            self::clearFriendCaches($userId);
+        }
     }
 }

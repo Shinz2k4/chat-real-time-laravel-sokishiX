@@ -40,7 +40,15 @@ Route::post('/password/reset', [ResetPasswordController::class, 'reset'])->name(
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Route::middleware('auth')->group(function () {
-    // Chat routes
+    // Friends system
+    Route::get('/friends/search', [App\Http\Controllers\FriendsController::class, 'search']);
+    Route::post('/friends/send', [App\Http\Controllers\FriendsController::class, 'send']);
+    Route::get('/friends/incoming', [App\Http\Controllers\FriendsController::class, 'incoming']);
+    Route::get('/friends/outgoing', [App\Http\Controllers\FriendsController::class, 'outgoing']);
+    Route::post('/friends/respond', [App\Http\Controllers\FriendsController::class, 'respond']);
+    Route::get('/friends', [App\Http\Controllers\FriendsController::class, 'friends']);
+    Route::post('/friends/unfriend', [App\Http\Controllers\FriendsController::class, 'unfriend']);
+    // Chat routes (only friends returned)
     Route::get('/contacts', [ContactsController::class, 'get']);
     Route::get('/contacts/preload', [ContactsController::class, 'preloadConversations']);
     Route::post('/conversation/send', [ContactsController::class, 'send']);
@@ -58,6 +66,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/u/{user}', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/change-password', [ProfileController::class, 'changePassword'])->name('profile.change-password');
     Route::put('/profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
     Route::delete('/profile/delete-avatar', [ProfileController::class, 'deleteAvatar'])->name('profile.delete-avatar');

@@ -69,6 +69,9 @@ class EmailVerificationController extends Controller
             // Create the user using new instance
             $user = new User();
             $user->name = $pendingUser['name'];
+            if (isset($pendingUser['username'])) {
+                $user->username = $pendingUser['username'];
+            }
             $user->email = $pendingUser['email'];
             $user->phone = $pendingUser['phone'];
             $user->password = $pendingUser['password'];

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Friends Cache</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        button { padding: 10px 15px; margin: 5px; border: none; border-radius: 3px; cursor: pointer; background-color: #007bff; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Debug Friends Cache</h1>
+    
+    <div class="debug-section">
+        <h3>Current Cache Status</h3>
+        <button onclick="checkCache()">Check Cache</button>
+        <button onclick="clearCache()">Clear All Cache</button>
+        <div id="output"></div>
+    </div>
+
+    <script>
+        function checkCache() {
+            const output = document.getElementById('output');
+            const friendsKeys = [];
+            
+            // Get all localStorage keys that start with 'friends_'
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('friends_')) {
+                    friendsKeys.push(key);
+                }
+            }
+            
+            if (friendsKeys.length === 0) {
+                output.innerHTML = '<pre>No friends cache found</pre>';
+                return;
+            }
+            
+            let html = '<pre>';
+            friendsKeys.forEach(key => {
+                try {
+                    const data = localStorage.getItem(key);
+                    const parsed = JSON.parse(data);
+                    const age = Date.now() - parsed.timestamp;
+                    const ageMinutes = Math.round(age / 60000);
+                    const isExpired = age > 5 * 60 * 1000; // 5 minutes
+                    
+                    html += `Key: ${key}\n`;
+                    html += `Age: ${ageMinutes} minutes ${isExpired ? '(EXPIRED)' : '(VALID)'}\n`;
+                    html += `Data length: ${parsed.data ? parsed.data.length : 0} items\n`;
+                    html += `Timestamp: ${new Date(parsed.timestamp).toLocaleString()}\n`;
+                    html += '---\n';
+                } catch (e) {
+                    html += `Key: ${key} (ERROR: ${e.message})\n`;
+                }
+            });
+            html += '</pre>';
+            
+            output.innerHTML = html;
+        }
+        
+        function clearCache() {
+            const friendsKeys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('friends_')) {
+                    friendsKeys.push(key);
+                }
+            }
+            
+            friendsKeys.forEach(key => localStorage.removeItem(key));
+            document.getElementById('output').innerHTML = '<pre>Cache cleared!</pre>';
+        }
+        
+        // Auto-check on load
+        checkCache();
+    </script>
+</body>
+</html>
+

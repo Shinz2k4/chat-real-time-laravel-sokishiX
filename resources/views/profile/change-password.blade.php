@@ -3,15 +3,16 @@
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-gradient-warning text-dark">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-gradient-warning text-dark d-flex align-items-center justify-content-between">
                     <h4 class="mb-0">
                         <i class="fas fa-key me-2"></i>
                         Đổi mật khẩu
                     </h4>
+                    <a href="{{ route('profile.index') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-arrow-left me-1"></i>Quay lại</a>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     @if (session('success'))
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
                             <i class="fas fa-check-circle me-2"></i>
@@ -132,10 +133,10 @@
                             </ul>
                         </div>
 
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-end gap-2 mt-3">
                             <a href="{{ route('profile.index') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left me-2"></i>
-                                Quay lại
+                                Hủy
                             </a>
                             <button type="submit" class="btn btn-warning" id="submitBtn" disabled>
                                 <i class="fas fa-save me-2"></i>
@@ -312,5 +313,9 @@ document.addEventListener('DOMContentLoaded', function() {
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+.card { border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+.card-header { border-top-left-radius: 14px; border-top-right-radius: 14px; }
+.password-strength .progress-bar { transition: width .2s ease; }
 </style>
 @endsection

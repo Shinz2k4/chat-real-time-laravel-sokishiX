@@ -26,6 +26,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'phone',
         'password',
@@ -77,10 +78,8 @@ class User extends Authenticatable
     public function getAvatarUrl(array $transformations = []): string
     {
         if ($this->profile_image && CloudinaryService::isCloudinaryUrl($this->profile_image)) {
-            $publicId = CloudinaryService::extractPublicId($this->profile_image);
-            if ($publicId) {
-                return CloudinaryService::getAvatarUrl($publicId, $transformations);
-            }
+            // Transform the full secure URL directly to avoid wrong cloud name issues
+            return CloudinaryService::transformFullUrl($this->profile_image, $transformations);
         }
 
         // Return default avatar if no profile image or not a Cloudinary URL

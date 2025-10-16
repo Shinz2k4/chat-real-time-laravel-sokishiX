@@ -19,7 +19,11 @@ class Message extends Model
         'from',
         'to', 
         'text',
-        'read'
+        'read',
+        'attachment_url',
+        'attachment_type',
+        'attachment_name',
+        'attachment_size'
     ];
 
     // Let Jenssegers handle date conversion; declare date attributes

@@ -96,6 +96,61 @@ class CloudinaryService
     }
 
     /**
+     * Upload generic message attachment (image/file) to Cloudinary
+     * - Images go to images folder with image upload API
+     * - Non-images go to raw folder with resource_type raw
+     */
+    public static function uploadMessageAttachment(UploadedFile $file, string $userId): array
+    {
+        try {
+            if (!$file->isValid()) {
+                throw new \Exception('File upload không hợp lệ.');
+            }
+
+            // Limit 20MB
+            if ($file->getSize() > 20 * 1024 * 1024) {
+                throw new \Exception('Kích thước file không được vượt quá 20MB.');
+            }
+
+            $mime = $file->getMimeType();
+            $ext = $file->getClientOriginalExtension();
+            $base = 'laravel-chat-app/messages/'.date('Y/m/d')."/{$userId}_".time();
+
+            if (str_starts_with($mime, 'image/')) {
+                $result = Cloudinary::upload($file->getRealPath(), [
+                    'public_id' => $base,
+                    'folder' => 'laravel-chat-app/messages',
+                    'transformation' => [
+                        'quality' => 'auto',
+                        'format' => 'auto'
+                    ]
+                ]);
+            } else {
+                // For non-image, use raw resource type
+                $result = Cloudinary::uploadFile($file->getRealPath(), [
+                    'public_id' => $base,
+                    'folder' => 'laravel-chat-app/messages',
+                    'resource_type' => 'raw'
+                ]);
+            }
+
+            return [
+                'success' => true,
+                'secure_url' => $result->getSecurePath(),
+                'url' => $result->getPath(),
+                'public_id' => $result->getPublicId(),
+                'mime' => $mime,
+                'ext' => $ext,
+                'bytes' => $file->getSize(),
+                'original_name' => $file->getClientOriginalName()
+            ];
+        } catch (\Exception $e) {
+            Log::error('Cloudinary upload message attachment error: ' . $e->getMessage());
+            return [ 'success' => false, 'error' => $e->getMessage() ];
+        }
+    }
+
+    /**
      * Get optimized avatar URL
      *
      * @param string $publicId
@@ -117,11 +172,14 @@ class CloudinaryService
 
         // Build transformation string
         $transformationString = "w_{$transformations['width']},h_{$transformations['height']},c_{$transformations['crop']},g_{$transformations['gravity']},q_{$transformations['quality']},f_{$transformations['format']}";
-        
+
         // Get cloud name from config
-        $cloudName = config('cloudinary.cloud_name') ?: 'do8gfnops';
-        
-        // Build URL manually
+        $cloudName = config('cloudinary.cloud_name');
+        if (!$cloudName) {
+            // Fallback: build relative path so caller can prepend or use transformFullUrl
+            return "/image/upload/{$transformationString}/{$publicId}";
+        }
+        // Build URL manually when cloud name is known
         return "https://res.cloudinary.com/{$cloudName}/image/upload/{$transformationString}/{$publicId}";
     }
 
@@ -134,6 +192,28 @@ class CloudinaryService
     {
         // You can use a default avatar from Cloudinary or a local default image
         return 'https://via.placeholder.com/150/6366f1/ffffff?text=U';
+    }
+
+    /**
+     * Transform an existing Cloudinary URL by injecting transformation string.
+     */
+    public static function transformFullUrl(string $url, array $transformations = []): string
+    {
+        $defaultTransformations = [
+            'width' => 150,
+            'height' => 150,
+            'crop' => 'fill',
+            'gravity' => 'face',
+            'quality' => 'auto',
+            'format' => 'auto'
+        ];
+        $t = array_merge($defaultTransformations, $transformations);
+        $trans = "w_{$t['width']},h_{$t['height']},c_{$t['crop']},g_{$t['gravity']},q_{$t['quality']},f_{$t['format']}";
+
+        // Insert transforms BEFORE version segment (correct Cloudinary order)
+        // From: /upload/v1234/path
+        // To:   /upload/w_..../v1234/path
+        return preg_replace('/\/upload\/(v\d+\/)?/','/upload/'.$trans.'/$1', $url, 1) ?: $url;
     }
 
     /**

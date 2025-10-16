@@ -3,15 +3,16 @@
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header bg-gradient-primary text-white">
+        <div class="col-lg-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-gradient-primary text-white d-flex align-items-center justify-content-between">
                     <h4 class="mb-0">
                         <i class="fas fa-edit me-2"></i>
                         Chỉnh sửa thông tin cá nhân
                     </h4>
+                    <a href="{{ route('profile.index') }}" class="btn btn-light btn-sm"><i class="fas fa-arrow-left me-1"></i>Quay lại</a>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     @if (session('success'))
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
                             <i class="fas fa-check-circle me-2"></i>
@@ -24,10 +25,10 @@
                         @csrf
                         @method('PUT')
 
-                        <div class="row">
+                        <div class="row g-4">
                             <!-- Current Avatar -->
-                            <div class="col-md-4 text-center">
-                                <div class="current-avatar mb-4">
+                            <div class="col-md-4">
+                                <div class="current-avatar mb-3 text-center">
                                     <h6 class="text-muted mb-3">Ảnh đại diện hiện tại</h6>
                                     @if($user->profile_image && $user->profile_image !== 'default_image.png')
                                         <img src="{{ $user->getAvatarUrl() }}" 
@@ -125,10 +126,10 @@
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-between mt-4">
+                        <div class="d-flex justify-content-end gap-2 mt-3">
                             <a href="{{ route('profile.index') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left me-2"></i>
-                                Quay lại
+                                Hủy
                             </a>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>
@@ -194,6 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
     height: 120px;
     object-fit: cover;
     border: 3px solid #fff;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
 }
 
 .profile-placeholder-preview {
@@ -201,18 +203,19 @@ document.addEventListener('DOMContentLoaded', function() {
     height: 120px;
     font-size: 3rem;
     margin: 0 auto;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
 }
 
 .upload-section {
-    padding: 20px;
-    border: 2px dashed #dee2e6;
-    border-radius: 10px;
-    background: #f8f9fa;
+    padding: 18px;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    background: #f8fafc;
 }
 
 .upload-section:hover {
     border-color: #6366f1;
-    background: #f0f0ff;
+    background: #eef2ff;
 }
 
 .form-control:focus {

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friend Request Real-time Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        button { padding: 10px 15px; margin: 5px; border: none; border-radius: 3px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-warning { background-color: #ffc107; color: black; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        .log-entry { margin: 5px 0; padding: 5px; border-left: 3px solid #007bff; background-color: #f8f9fa; }
+        .log-success { border-left-color: #28a745; }
+        .log-error { border-left-color: #dc3545; }
+        .log-warning { border-left-color: #ffc107; }
+    </style>
+</head>
+<body>
+    <h1>Friend Request Real-time Test</h1>
+    
+    <div class="test-section info">
+        <h3>Test Instructions</h3>
+        <p>1. Open this page in two different browser windows/tabs</p>
+        <p>2. Login with different accounts in each window</p>
+        <p>3. In one window, go to Friends tab and send a friend request</p>
+        <p>4. In the other window, you should see the request appear immediately</p>
+        <p>5. Accept/decline the request and see the response in the first window</p>
+    </div>
+
+    <div class="test-section">
+        <h3>WebSocket Connection Status</h3>
+        <button class="btn-primary" onclick="checkWebSocketStatus()">Check WebSocket Status</button>
+        <div id="websocket-status"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Event Logs</h3>
+        <button class="btn-warning" onclick="clearLogs()">Clear Logs</button>
+        <div id="event-logs"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Actions</h3>
+        <button class="btn-success" onclick="simulateFriendRequest()">Simulate Friend Request</button>
+        <button class="btn-warning" onclick="simulateResponse()">Simulate Response</button>
+        <div id="test-results"></div>
+    </div>
+
+    <script>
+        let eventLogs = [];
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            eventLogs.push({ timestamp, message, type });
+            updateLogDisplay();
+        }
+        
+        function updateLogDisplay() {
+            const logsDiv = document.getElementById('event-logs');
+            let html = '';
+            eventLogs.slice(-10).reverse().forEach(log => {
+                html += `<div class="log-entry log-${log.type}">
+                    <strong>[${log.timestamp}]</strong> ${log.message}
+                </div>`;
+            });
+            logsDiv.innerHTML = html;
+        }
+        
+        function clearLogs() {
+            eventLogs = [];
+            updateLogDisplay();
+        }
+        
+        function checkWebSocketStatus() {
+            const statusDiv = document.getElementById('websocket-status');
+            
+            if (typeof Echo !== 'undefined') {
+                statusDiv.innerHTML = '<div class="success">✅ WebSocket (Echo) is available</div>';
+                addLog('WebSocket connection checked - Available', 'success');
+            } else {
+                statusDiv.innerHTML = '<div class="error">❌ WebSocket (Echo) not available</div>';
+                addLog('WebSocket connection checked - Not available', 'error');
+            }
+        }
+        
+        function simulateFriendRequest() {
+            addLog('Simulating friend request sent...', 'info');
+            
+            // This would normally be triggered by the backend
+            const mockEvent = {
+                friend_request: {
+                    _id: 'mock_id',
+                    from_user_id: 'user1',
+                    to_user_id: 'user2',
+                    status: 'pending'
+                },
+                from_user: {
+                    _id: 'user1',
+                    username: 'testuser',
+                    name: 'Test User'
+                },
+                message: 'Bạn có lời mời kết bạn mới từ testuser'
+            };
+            
+            addLog(`Mock event: ${JSON.stringify(mockEvent, null, 2)}`, 'info');
+        }
+        
+        function simulateResponse() {
+            addLog('Simulating friend request response...', 'info');
+            
+            const mockEvent = {
+                friend_request: {
+                    _id: 'mock_id',
+                    from_user_id: 'user1',
+                    to_user_id: 'user2',
+                    status: 'accepted'
+                },
+                to_user: {
+                    _id: 'user2',
+                    username: 'frienduser',
+                    name: 'Friend User'
+                },
+                action: 'accept',
+                message: 'Lời mời kết bạn đã được chấp nhận bởi frienduser'
+            };
+            
+            addLog(`Mock response: ${JSON.stringify(mockEvent, null, 2)}`, 'success');
+        }
+        
+        // Auto-check WebSocket on load
+        checkWebSocketStatus();
+        
+        // Listen for console logs (if available)
+        if (typeof console !== 'undefined') {
+            const originalLog = console.log;
+            console.log = function(...args) {
+                if (args[0] && typeof args[0] === 'string' && args[0].includes('🔔')) {
+                    addLog(args.join(' '), 'info');
+                }
+                originalLog.apply(console, args);
+            };
+        }
+    </script>
+</body>
+</html>
+
