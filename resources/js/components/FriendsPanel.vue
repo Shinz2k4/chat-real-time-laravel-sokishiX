@@ -22,7 +22,9 @@
                                 <button class="btn btn-outline-danger btn-sm" :disabled="busy" @click="unfriend(f._id)"><i class="fas fa-user-minus me-1"></i> Hủy</button>
                             </div>
                         </div>
-                        <div v-else class="text-muted small px-2 py-1">Chưa có bạn bè</div>
+                        <div v-else class="text-muted small px-2 py-1">
+                            Chưa có bạn bè ({{ friends.length }})
+                        </div>
                     </div>
                 </div>
             </div>
@@ -86,7 +88,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="text-muted small px-2 py-1">Không có lời mời</div>
+                        <div v-else class="text-muted small px-2 py-1">Không có lời mời ({{ incoming.length }})</div>
                     </div>
                 </div>
 
@@ -109,7 +111,7 @@
                                 <span class="badge bg-warning">Đang chờ</span>
                             </div>
                         </div>
-                        <div v-else class="text-muted small px-2 py-1">Chưa gửi lời mời nào</div>
+                        <div v-else class="text-muted small px-2 py-1">Chưa gửi lời mời nào ({{ outgoing.length }})</div>
                     </div>
                 </div>
             </div>
@@ -243,10 +245,14 @@ export default {
                 }
                 
                 console.log('🔄 Loading requests from API...');
+                console.log('Making requests to /friends/incoming and /friends/outgoing with user:', this.user);
                 const [inc, out] = await Promise.all([
                     axios.get('/friends/incoming'),
                     axios.get('/friends/outgoing')
                 ]);
+                
+                console.log('Raw API responses:', { incoming: inc.data, outgoing: out.data });
+                
                 // normalize relations for simpler template
                 this.incoming = (inc.data || []).map(x => ({...x, from_user: x.from_user || x.fromUser}));
                 this.outgoing = (out.data || []).map(x => ({...x, to_user: x.to_user || x.toUser}));
@@ -256,7 +262,12 @@ export default {
                 this.setCache('outgoing', this.outgoing);
                 
                 this.$emit('incoming-count', this.incoming.length);
-            }catch(e){ console.error(e); }
+                console.log('✅ Requests loaded successfully:', { incoming: this.incoming.length, outgoing: this.outgoing.length });
+            }catch(e){ 
+                console.error('❌ Error loading requests:', e);
+                this.incoming = [];
+                this.outgoing = [];
+            }
         },
         async loadFriends(forceRefresh = false){
             try{
@@ -271,12 +282,18 @@ export default {
                 }
                 
                 console.log('🔄 Loading friends from API...');
+                console.log('Making request to /friends with user:', this.user);
                 const { data } = await axios.get('/friends');
+                console.log('Raw friends API response:', data);
                 this.friends = data || [];
                 
                 // Cache the result
                 this.setCache('friends', this.friends);
-            }catch(e){ console.error(e); }
+                console.log('✅ Friends loaded successfully:', this.friends.length);
+            }catch(e){ 
+                console.error('❌ Error loading friends:', e);
+                this.friends = [];
+            }
         },
         async send(toId){
             this.busy = true;
@@ -328,16 +345,16 @@ export default {
                 
                 if (cachedFriends !== null) {
                     this.friends = cachedFriends;
-                    console.log('✅ Loaded friends from cache');
+                    console.log('✅ Loaded friends from cache:', this.friends.length);
                 }
                 if (cachedIncoming !== null) {
                     this.incoming = cachedIncoming;
                     this.$emit('incoming-count', this.incoming.length);
-                    console.log('✅ Loaded incoming requests from cache');
+                    console.log('✅ Loaded incoming requests from cache:', this.incoming.length);
                 }
                 if (cachedOutgoing !== null) {
                     this.outgoing = cachedOutgoing;
-                    console.log('✅ Loaded outgoing requests from cache');
+                    console.log('✅ Loaded outgoing requests from cache:', this.outgoing.length);
                 }
                 
                 this.cacheLoaded = true;
@@ -363,9 +380,11 @@ export default {
             for (const type of types) {
                 const cached = this.getCache(type, maxAge);
                 if (cached === null) {
+                    console.log(`Cache is stale for ${type}`);
                     return true; // At least one cache is stale
                 }
             }
+            console.log('All caches are fresh');
             return false;
         },
         
@@ -401,8 +420,27 @@ export default {
     },
     async mounted(){
         console.log('🚀 FriendsPanel mounted');
+        console.log('User object:', this.user);
+        console.log('Initial data state:', { 
+            friends: this.friends.length, 
+            incoming: this.incoming.length, 
+            outgoing: this.outgoing.length 
+        });
+        
+        // Check if user is authenticated
+        if (!this.user || !this.user._id) {
+            console.error('❌ User not authenticated or missing _id');
+            return;
+        }
+        
         // Load from cache first for better UX
         await this.loadFromCache();
+        
+        console.log('After cache load:', { 
+            friends: this.friends.length, 
+            incoming: this.incoming.length, 
+            outgoing: this.outgoing.length 
+        });
         
         // Only load fresh data if not already loaded or cache is stale
         const isStale = this.isCacheStale();
@@ -410,12 +448,20 @@ export default {
         
         if (!this.dataLoaded || isStale) {
             console.log('🔄 Loading fresh data from API...');
-            this.loadRequests();
-            this.loadFriends();
+            await Promise.all([
+                this.loadRequests(),
+                this.loadFriends()
+            ]);
             this.dataLoaded = true;
         } else {
             console.log('✅ Using cached data, no API calls needed');
         }
+        
+        console.log('Final data state:', { 
+            friends: this.friends.length, 
+            incoming: this.incoming.length, 
+            outgoing: this.outgoing.length 
+        });
     }
 }
 </script>
