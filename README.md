@@ -1,69 +1,31 @@
-# chat-real-time-laravel
-# Laravel Chat App – Docker Run Guide
+# Laravel Chat App – Local Run (Preferred) + Docker (Optional)
 
-This project is containerized with Docker (PHP-FPM + Nginx + Node/Vite). It connects to MongoDB Atlas.
+This project is a real-time Laravel chat application that can run **natively (local)** or in **Docker containers**.
+Local (native) mode is **recommended** for faster response times and better development experience.
+Docker is available as a **fallback option** for environments where native setup is not possible.
 
-## 1) First-time setup
+---
 
-Prereqs: Docker Desktop (WSL2 recommended), PowerShell opened at the project root.
+## 🧩 1) Run Locally (Recommended)
 
-1. Create .env from example (if missing) and set MongoDB Atlas DSN.
+### Prerequisites
 
-```
-Copy-Item .env.example .env
-```
+* PHP 8.2 with extensions: `mbstring`, `bcmath`, `intl`, `openssl`, `pdo`, `mongodb` (via PECL), `zip`
+* Composer 2.x
+* Node.js 18.x and npm
+* MongoDB (local or Atlas)
 
-Edit `.env`:
+### Steps
 
-```
-APP_URL=http://localhost
-DB_CONNECTION=mongodb
-MONGODB_DSN=mongodb+srv://<username>:<password>@<cluster>.<hash>.mongodb.net
-MONGODB_DATABASE=laravel_chat
-VITE_HOST=0.0.0.0
-```
+#### 1. Copy environment file and set MongoDB
 
-2. Build and start containers.
-
-```
-docker compose build --no-cache app
-docker compose up -d
-```
-
-3. Install PHP dependencies (creates vendor/), fix git safe.directory, and generate key.
-
-```
-docker compose exec app git config --global --add safe.directory /var/www/html
-docker compose run --rm app composer install --no-interaction --prefer-dist --no-progress
-docker compose exec app php artisan key:generate
-docker compose exec app php artisan config:clear
-docker compose exec app php artisan cache:clear
-docker compose exec app php artisan config:cache
-```
-
-4. Frontend (Vite) runs in the `node` service automatically. If needed:
-
-```
-docker compose restart node
-```
-
-Access the app at `http://localhost`.
-
-## 1.1) Run without Docker (native)
-
-Prereqs:
-- PHP 8.2 with extensions: mbstring, bcmath, intl, openssl, pdo, mongodb (pecl), zip
-- Composer 2.x
-- Node.js 18.x and npm
-- MongoDB (local or Atlas)
-
-Steps:
-1. Copy env and set Mongo:
-```
+```bash
 cp .env.example .env
 ```
+
 Edit `.env`:
-```
+
+```env
 APP_URL=http://localhost
 DB_CONNECTION=mongodb
 MONGODB_DSN=mongodb+srv://<user>:<pass>@<cluster>.<hash>.mongodb.net
@@ -77,153 +39,156 @@ VITE_PUSHER_SCHEME=http
 VITE_HOST=0.0.0.0
 ```
 
-2. Install PHP deps and generate key:
-```
+#### 2. Install PHP dependencies and generate key
+
+```bash
 composer install --no-interaction --prefer-dist --no-progress
 php artisan key:generate
 ```
 
-**Note**: If you encounter MongoDB extension version conflicts, the project is configured to handle this automatically. The `composer.json` includes platform configuration to work with different MongoDB extension versions.
+> **Note:** The project automatically handles MongoDB extension version compatibility through `composer.json`.
 
-3. Frontend deps and dev server:
-```
+#### 3. Frontend setup
+
+```bash
 npm install
 npm run dev
 ```
 
-4. Run Laravel server:
-```
+#### 4. Run Laravel server
+
+```bash
 php artisan serve --host=0.0.0.0 --port=8000
 ```
-Access: `http://localhost:8000`
 
-5. Optimize (optional in prod):
-```
+Access at: `http://localhost:8000`
+
+#### 5. Optional optimization for production
+
+```bash
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 composer dump-autoload --optimize
 ```
 
-Notes:
-- Ensure the PHP MongoDB extension is installed: `pecl install mongodb` and enabled in `php.ini`.
-- Broadcasting via Pusher-compatible server: configure your Pusher or Laravel WebSockets if needed; update `.env` accordingly.
+**Notes**
 
-## 2) Daily usage (after you stop Docker)
+* Ensure the PHP MongoDB extension is installed (`pecl install mongodb`).
+* Broadcasting (Pusher/Laravel WebSockets) requires proper `.env` configuration.
 
-Start everything:
+---
 
+## 🐋 2) Run with Docker (Optional / For Compatibility Only)
+
+> ⚠️ Docker setup is slower and may introduce higher request latency.
+> Use this only when your local environment cannot install the required dependencies.
+
+### Prerequisites
+
+* Docker Desktop (WSL2 recommended)
+* PowerShell or terminal at project root
+
+### Steps
+
+#### 1. Create `.env`
+
+```bash
+Copy-Item .env.example .env
 ```
-docker compose up -d
+
+Edit `.env`:
+
+```env
+APP_URL=http://localhost
+DB_CONNECTION=mongodb
+MONGODB_DSN=mongodb+srv://<username>:<password>@<cluster>.<hash>.mongodb.net
+MONGODB_DATABASE=laravel_chat
+VITE_HOST=0.0.0.0
 ```
 
-Check status:
+#### 2. Build and start containers
 
-```
-docker compose ps
-```
-
-Install new PHP deps (only when composer.json changes):
-
-```
-docker compose run --rm app composer install --no-interaction --prefer-dist --no-progress
-```
-
-Rebuild PHP image (only when Dockerfile or PHP extensions change):
-
-```
+```bash
 docker compose build --no-cache app
 docker compose up -d
 ```
 
-Stop services:
+#### 3. Install PHP dependencies & generate key
 
+```bash
+docker compose exec app git config --global --add safe.directory /var/www/html
+docker compose run --rm app composer install --no-interaction --prefer-dist --no-progress
+docker compose exec app php artisan key:generate
+docker compose exec app php artisan config:clear
+docker compose exec app php artisan cache:clear
+docker compose exec app php artisan config:cache
 ```
-docker compose down
+
+#### 4. (Optional) Restart frontend service
+
+```bash
+docker compose restart node
 ```
 
-Stop and remove volumes (DB data) – careful:
+Access at `http://localhost`
 
-```
-docker compose down -v
-```
+---
 
-## 2.1) Performance runbook (Docker Desktop on Windows/Mac)
+## ⚙️ 3) Performance Notes (Docker)
 
-Run these after the first build to significantly reduce request latency:
+If you must use Docker on Windows/Mac, run these commands after build to improve latency:
 
-```
-# Rebuild PHP to include OPcache config and restart
+```bash
 docker compose build --no-cache app
 docker compose up -d
-
-# Install deps into container-owned vendor volume
 docker compose run --rm app composer install --no-interaction --prefer-dist --no-progress
-
-# Warm Laravel caches (config/route/view/events) and optimize autoload
 docker compose exec app php artisan config:cache
 docker compose exec app php artisan route:cache
 docker compose exec app php artisan view:cache
 docker compose exec app php artisan event:cache
 docker compose exec app composer dump-autoload --optimize
-
-# Verify OPcache
-docker compose exec app php -r "if(function_exists('opcache_get_status')){echo (opcache_get_status()['opcache_enabled']?'OPcache ON':'OPcache OFF');}else{echo 'No OPcache';}"
 ```
 
-Notes:
-- Source is bind-mounted with `:delegated` to reduce sync overhead.
-- `vendor/` and `storage/` are container volumes to avoid slow host I/O.
-- Nginx gzip is enabled for static/text assets.
+---
 
-## 3) Environment notes (MongoDB Atlas)
+## 🌍 4) MongoDB Atlas Configuration
 
-- Ensure your Atlas IP Access List allows your Docker host (temporarily `0.0.0.0/0` for testing).
-- `.env` must contain a valid `MONGODB_DSN` and `MONGODB_DATABASE`.
-- No need to install PHP extensions on Windows host. The PHP image has `mongodb` 1.19.x with OpenSSL/TLS enabled.
+* Ensure your Atlas IP Access List allows your host (e.g., `0.0.0.0/0` for testing).
+* `.env` must contain valid `MONGODB_DSN` and `MONGODB_DATABASE`.
+* PHP images used in Docker already include the `mongodb` extension (v1.19.x).
 
-## 4) Vite/HMR
+---
 
-`vite.config.js` is configured to bind `0.0.0.0`, with HMR host `localhost:5173` and `origin: http://localhost:5173`.
+## 🔧 5) Troubleshooting
 
-- If HMR doesn’t connect, restart node:
+**Missing vendor folder**
 
-```
-docker compose restart node
+```bash
+composer install
 ```
 
-- If you access the site via a LAN IP (e.g., `http://192.168.x.x`), update `vite.config.js` HMR host and origin accordingly, then restart `node`.
+**Check MongoDB driver**
 
-## 5) Troubleshooting
-
-- Missing vendor/: run composer install inside container.
-
-```
-docker compose run --rm app composer install --no-interaction --prefer-dist --no-progress
+```bash
+php -m | grep mongodb
 ```
 
-- Verify MongoDB TLS and extension:
+**Clear caches**
 
-```
-docker compose exec app php -m | findstr /I mongodb
-docker compose exec app php -i | findstr /I "mongodb openssl ssl"
-```
-
-- Test Atlas DSN from PHP:
-
-```
-docker compose exec app php -r "try{ new MongoDB\\Driver\\Manager(getenv('MONGODB_DSN')); echo 'OK'; }catch(Throwable $e){ echo $e->getMessage(); }"
+```bash
+php artisan config:clear && php artisan cache:clear && php artisan config:cache
 ```
 
-- Clear caches:
+**View logs**
 
-```
-docker compose exec app php artisan config:clear && docker compose exec app php artisan cache:clear && docker compose exec app php artisan config:cache
-```
-
-- View logs:
-
-```
+```bash
 docker compose logs -f app
 docker compose logs -f web
 ```
+
+---
+
+**Recommendation:**
+Use **local mode** whenever possible for best developer experience.
+Docker should be used only if your environment cannot support PHP/MongoDB natively.
